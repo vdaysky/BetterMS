@@ -1,0 +1,39 @@
+package obfuscate.ui.component;
+
+import obfuscate.MsdmPlugin;
+import obfuscate.event.bus.EventBus;
+import obfuscate.game.player.StrikePlayer;
+import org.bukkit.Material;
+import org.bukkit.event.inventory.InventoryClickEvent;
+
+public class InventoryButton extends Button<InventoryClickEvent> {
+
+    private Integer subId;
+
+    public InventoryButton(Material mat) {
+        super(mat);
+    }
+
+    @Override
+    void registerSelf(StrikePlayer holder, Integer slot) {
+        MsdmPlugin.highlight("Registering InventoryButton " + slot);
+        subId = EventBus.addEventHandler(
+            InventoryClickEvent.class,
+            e -> {
+                MsdmPlugin.highlight("OnClick: " + e.getSlot() + " compared to " + slot);
+                if (e.getSlot() == slot) {
+                    onClick(e);
+                    e.setCancelled(true);
+                }
+                return false;
+            }
+        );
+    }
+
+    @Override
+    void deregisterSelf() {
+        if (subId != null) {
+            EventBus.unsubscribe(subId);
+        }
+    }
+}
