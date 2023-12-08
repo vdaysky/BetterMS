@@ -253,11 +253,15 @@ public class Gun extends StrikeItem
 
 		int delay = 0;
 		//Standard (300) RPM
-//        gun.shootOnce(holder, game);
-		new Task(
-				()-> shootOnce(holder, game), delay
-		).run();
 
+		// I don't know why, I don't want to know why
+		// but this at least works.
+		// I am in no mood to try and figure those timings out
+		if (getGunStats().isSniper()) {
+			shootOnce(holder, game);
+		} else {
+			new Task(()-> shootOnce(holder, game), delay).run();
+		}
 		//600RPM
 		if (getFireRate() <= 100 && getFireRate() > 50)
 		{

@@ -88,7 +88,6 @@ public class DefaultAutocomplete implements CommandAutocomplete {
             List<String> applicableRequiredOptions = filterApplicable(toCompleteRequired, options);
 
             if (missingArg || !applicableRequiredOptions.isEmpty()) {
-                MsdmPlugin.highlight("return applicableRequiredOptions");
                 return applicableRequiredOptions;
             }
 

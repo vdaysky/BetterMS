@@ -27,7 +27,6 @@ public class LoadableMap<K, V extends SyncableObject> extends Struct implements 
 
     @Override
     public Promise<LoadableMap<K, V>> load(Object payload) {
-        MsdmPlugin.logger().info("LoadableMap.load of " + payload);
         this.objects.clear();
 
         List<Promise<?>> ps = new ArrayList<>();

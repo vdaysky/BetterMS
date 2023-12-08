@@ -11,7 +11,7 @@ public class PluginManager {
     private static final HashMap<String, Class<?>> pluginClasses = new HashMap<>();
 
     public static void collectPluginClasses() {
-        for (Class<?> cls : new Reflections("HoldMyOrangeJuice.game.core.plugins").getTypesAnnotatedWith(Plugin.class)) {
+        for (Class<?> cls : new Reflections("obfuscate.game.core.plugins").getTypesAnnotatedWith(Plugin.class)) {
             pluginClasses.put(cls.getSimpleName(), cls);
         }
     }

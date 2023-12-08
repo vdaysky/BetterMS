@@ -25,6 +25,7 @@ import obfuscate.mechanic.item.utility.grenade.Grenade;
 import obfuscate.team.InGameTeamData;
 import obfuscate.team.StrikeTeam;
 import obfuscate.util.Promise;
+import obfuscate.util.serialize.ObjectId;
 import obfuscate.util.time.Task;
 import obfuscate.world.GameMap;
 import obfuscate.world.TempMap;
@@ -51,6 +52,8 @@ public interface IGame extends CustomListener {
     /** force-starts game.
      * @param seconds delay in seconds*/
     void forceStart(int seconds);
+
+    ObjectId getId();
 
     InGameTeamData getOther(InGameTeamData roster);
 

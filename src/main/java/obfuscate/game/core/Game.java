@@ -808,12 +808,10 @@ public abstract class Game extends GameData implements IGame {
         }
 
         if (e.getRoster().getTeam() == StrikeTeam.CT) {
-            MsdmPlugin.highlight("Set scoreboard for " + e.getPlayer().getActualName() + " to teamAScoreboard");
             e.getPlayer().getPlayer().setScoreboard(teamAScoreboard);
             teamAHealthObjective.getScore(e.getPlayer().getActualName()).setScore(100);
             e.getPlayer().getPlayer().setScoreboard(teamAScoreboard);
         } else {
-            MsdmPlugin.highlight("Set scoreboard for " + e.getPlayer().getActualName() + " to teamBScoreboard");
             e.getPlayer().getPlayer().setScoreboard(teamBScoreboard);
             teamBHealthObjective.getScore(e.getPlayer().getActualName()).setScore(100);
             e.getPlayer().getPlayer().setScoreboard(teamBScoreboard);
@@ -1546,6 +1544,10 @@ public abstract class Game extends GameData implements IGame {
     {
         if(spectator == target) {
             System.out.println("[WARN] cant spectate self");
+            return;
+        }
+
+        if (!spectator.isOnline()) {
             return;
         }
 

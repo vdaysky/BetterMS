@@ -74,6 +74,7 @@ public class WarmUpPlugin implements IPlugin<Competitive> {
     }
 
     private void setReady(IGame game, boolean ready) {
+        MsdmPlugin.info("Setting ready state to " + ready + " in game " + game.getId().getObjId());
 
         if (game.isInProgress()) {
             MsdmPlugin.logger().warning("Cannot set ready state when game is already in progress!");
@@ -87,6 +88,7 @@ public class WarmUpPlugin implements IPlugin<Competitive> {
         isReady = ready;
 
         if (!isReady) { // cancel countdown
+            MsdmPlugin.info("Cancel game countdown");
             game.setGameState(GeneralGameStage.WARM_UP);
             game.getGameState().removeTag(StateTag.TICKABLE);
             game.setLeftDuration(-1);
@@ -94,6 +96,7 @@ public class WarmUpPlugin implements IPlugin<Competitive> {
             game.broadcast(MsgSender.GAME, ChatColor.RED + "The game has been cancelled!", MsgType.CHAT);
             game.broadcast(MsgSender.NONE, "", MsgType.CHAT);
         } else { // start countdown
+            MsdmPlugin.info("Start game countdown");
             game.getGameState().setTag(StateTag.TICKABLE);
             int warmUpDuration = game.getConfig().getDuration(GeneralGameStage.WARM_UP);
             game.setLeftDuration(warmUpDuration);
@@ -278,8 +281,12 @@ public class WarmUpPlugin implements IPlugin<Competitive> {
     /** Start countdown if we can start the game */
     void checkStartConditions(Competitive game)
     {
-        if (game.isInProgress())
+        MsdmPlugin.info("Check game start conditions: " + game.getId().getObjId());
+        if (game.isInProgress()) {
+            MsdmPlugin.info("Game is already in progress");
             return;
+        }
+
 
         // some players are not ready, start hints in case they are fucking stupid
         if (game.readyStateRequiredByConfig() && !game.everyoneReady()) {
@@ -298,9 +305,8 @@ public class WarmUpPlugin implements IPlugin<Competitive> {
 
     @LocalEvent(cascade = true, priority = LocalPriority.POST)
     public void onPlayerJoinEvent(PlayerPostGameJoinEvent e) {
-
+        MsdmPlugin.info("[WarmupPlugin] Player joined a game");
         if (!e.getGame().isInProgress()) {
-
             boolean countDown = e.getGame().getPhaseSecondsLeft() != -1;
 
             e.getPlayer().sendMessage("");

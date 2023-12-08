@@ -119,7 +119,7 @@ public class BackendManager implements CustomListener {
 
         args.put("query", query);
 
-        MsdmPlugin.info("Query: " + query);
+//        MsdmPlugin.info("Query: " + query);
 
         HashMap<String, String> headers = new HashMap<>();
         headers.put("session_id", conn.getSessionId());
@@ -263,7 +263,7 @@ public class BackendManager implements CustomListener {
                 }
                 try {
                     Object json = new JSONParser().parse((String) x.body());
-                    MsdmPlugin.highlight("[HTTP] Response: " + json);
+//                    MsdmPlugin.highlight("[HTTP] Response: " + json);
                     promise.fulfill((T) json);
                 } catch (Exception e) {
                     e.printStackTrace();

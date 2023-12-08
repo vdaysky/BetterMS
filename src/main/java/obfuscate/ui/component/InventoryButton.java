@@ -16,11 +16,9 @@ public class InventoryButton extends Button<InventoryClickEvent> {
 
     @Override
     void registerSelf(StrikePlayer holder, Integer slot) {
-        MsdmPlugin.highlight("Registering InventoryButton " + slot);
         subId = EventBus.addEventHandler(
             InventoryClickEvent.class,
             e -> {
-                MsdmPlugin.highlight("OnClick: " + e.getSlot() + " compared to " + slot);
                 if (e.getSlot() == slot) {
                     onClick(e);
                     e.setCancelled(true);

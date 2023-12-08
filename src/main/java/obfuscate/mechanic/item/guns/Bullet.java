@@ -204,7 +204,6 @@ public class Bullet implements CustomListener
 			new BulletStopEvent(this).trigger();
 		}
 	}
-
 	private void _scheduleUpdate() {
 		new Task(()-> {
 			boolean shouldStop = updateV2();
@@ -225,7 +224,7 @@ public class Bullet implements CustomListener
 	//Tracer Particle
 	public void playTracer(Location hitLocation)
 	{
-		UtilEffect.showLine(_origin, hitLocation, ParticleEffect.CRIT);
+		UtilEffect.showLine(_origin, hitLocation, ParticleEffect.CRIT, 1);
 	}
 
 	/** removes entity representing bullet and mark bullet to be deleted */

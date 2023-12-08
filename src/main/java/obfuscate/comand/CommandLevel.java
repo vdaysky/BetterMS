@@ -83,7 +83,6 @@ public class CommandLevel {
     public List<CommandArgument<?>> missingOptionals(boolean includeNull) {
         List<CommandArgument<?>> args = new ArrayList<>();
         for (CommandArgument<?> opt : getHandler().getDeclaredOptionalArgs().args) {
-            MsdmPlugin.highlight("check if optional " + opt.getName() + " is missing : " + optional.toString());
             // either value is not present or it is null, meaning that prefix was specified, but was not followed by value
             if (!optional.containsNamedArg(opt.getName()) || (includeNull && optional.isNull(opt.getName()))) {
                 args.add(opt);

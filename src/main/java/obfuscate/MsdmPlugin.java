@@ -1413,6 +1413,10 @@ public class MsdmPlugin extends JavaPlugin implements Listener
                     ctx.getSender().sendMessage(MsgSender.NONE, C.cWhite + "- Fixed inventory grenade swapping and grenade dropping");
                     ctx.getSender().sendMessage(MsgSender.NONE, C.cWhite + "- Fixed hub chat duplication");
                     ctx.getSender().sendMessage(MsgSender.NONE, C.cWhite + "- Added book on join for retards who can't read chat");
+                    ctx.getSender().sendMessage(MsgSender.NONE, C.cAqua + C.Bold + "v0.1.11");
+                    ctx.getSender().sendMessage(MsgSender.NONE, C.cWhite + "- Fixed games being stuck in infinite warmup");
+                    ctx.getSender().sendMessage(MsgSender.NONE, C.cWhite + "- Fixed sniper shot delay");
+                    ctx.getSender().sendMessage(MsgSender.NONE, C.cWhite + "- Fixed mirage vines");
                     ctx.getSender().sendMessage(MsgSender.NONE, "");
                     return true;
                 })
@@ -1611,7 +1615,7 @@ public class MsdmPlugin extends JavaPlugin implements Listener
         );
 
         // disguise
-        FakeIdentity.fillCache();
+//        FakeIdentity.fillCache();
 
         // listeners
         Bukkit.getPluginManager().registerEvents(this, this);

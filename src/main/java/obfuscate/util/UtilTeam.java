@@ -73,7 +73,6 @@ public class UtilTeam
         } else {
             bukkitTeam.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.FOR_OTHER_TEAMS);
         }
-        MsdmPlugin.highlight("Get team " + name + " " + bukkitTeam);
 
         return bukkitTeam;
     }
@@ -82,7 +81,6 @@ public class UtilTeam
     {
         Team team_ = getBukkitTeam(scoreboard, teamId, canSeeTeamNames);
         team_.setColor(team.getChatColor());
-        MsdmPlugin.highlight("Add player " + player.getActualName() + " to team " + teamId + " " + team_ + " set prefix: " + team.getColor() + "colorcheckl");
         String entry;
         if (player.isNPC()) {
             BotPlayer bot = (BotPlayer) player;
