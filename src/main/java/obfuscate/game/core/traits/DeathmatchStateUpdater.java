@@ -10,7 +10,7 @@ public class DeathmatchStateUpdater implements GameStateUpdater {
     @Override
     public void update(Game game) {
         if (game.getGameState().isWarmup() && game.getGameStateDuration() == 0) {
-            new WarmUpEndEvent(game);
+            new WarmUpEndEvent(game).trigger();
 
             var stage = new GameStateInstance(
                     "DeathMatch",

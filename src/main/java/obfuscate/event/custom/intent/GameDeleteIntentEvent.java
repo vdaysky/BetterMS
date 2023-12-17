@@ -2,18 +2,19 @@ package obfuscate.event.custom.intent;
 
 import obfuscate.event.custom.IntentEvent;
 import obfuscate.game.core.Game;
+import obfuscate.game.core.IGame;
 import obfuscate.util.serialize.dump.Serializable;
 
 public class GameDeleteIntentEvent extends IntentEvent {
 
     @Serializable
-    private Game game;
+    private IGame game;
 
-    public GameDeleteIntentEvent(Game game) {
+    public GameDeleteIntentEvent(IGame game) {
         this.game = game;
     }
 
-    public Game getGame() {
+    public IGame getGame() {
         return game;
     }
 }

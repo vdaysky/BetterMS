@@ -2,19 +2,20 @@ package obfuscate.event.custom.item.gun;
 
 import obfuscate.event.custom.CustomEvent;
 import obfuscate.game.core.Game;
+import obfuscate.game.core.IGame;
 import obfuscate.game.player.StrikePlayer;
 import obfuscate.mechanic.item.guns.Gun;
 
 public class ReloadEndEvent extends CustomEvent {
 
-    private final Game _game;
+    private final IGame _game;
     private final Gun _gun;
     private final StrikePlayer _holder;
     private final boolean _instant;
     private final ReloadEndReason _reason;
     private final boolean _silent;
 
-    public ReloadEndEvent(Game game, Gun gun, StrikePlayer holder, ReloadEndReason reason, boolean instant, boolean silent) {
+    public ReloadEndEvent(IGame game, Gun gun, StrikePlayer holder, ReloadEndReason reason, boolean instant, boolean silent) {
         _game = game;
         _gun = gun;
         _holder = holder;
@@ -28,7 +29,7 @@ public class ReloadEndEvent extends CustomEvent {
         return _reason;
     }
 
-    public Game getGame() {
+    public IGame getGame() {
         return _game;
     }
 

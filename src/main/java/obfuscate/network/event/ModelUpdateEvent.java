@@ -17,10 +17,6 @@ public class ModelUpdateEvent extends FromBackendEvent {
         super(jsonEvt);
     }
 
-    public ObjectId getUpdatedObjectId() {
-        return objectId;
-    }
-
     public String getType() {
         return type;
     }

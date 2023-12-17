@@ -21,8 +21,8 @@ import obfuscate.mechanic.item.utility.grenade.Grenade;
 import obfuscate.mechanic.item.guns.*;
 import obfuscate.ui.ServerList;
 import obfuscate.util.EventCollector;
-import obfuscate.util.chat.C;
 import obfuscate.util.chat.MarkdownParser;
+import obfuscate.util.chat.Message;
 import obfuscate.util.recahrge.Recharge;
 import obfuscate.util.telegram.Telegram;
 import obfuscate.util.time.Task;
@@ -740,6 +740,8 @@ public class EventManager implements Listener
             var player = StrikePlayer.getOrCreate(e.getPlayer());
             Game game = player.getGame();
             if (game == null) {
+                var spawnLoc = player.getPlayer().getWorld().getSpawnLocation();
+                player.getPlayer().teleport(spawnLoc);
                 return;
             }
             game.getDamageManager().handleFallDamage(
@@ -766,7 +768,7 @@ public class EventManager implements Listener
                 if (!hubPlayer.isOnline()) {
                     continue;
                 }
-                hubPlayer.sendMessage(C.cGreen + "[" + C.cGray + "Hub" + C.cGreen + "] " + C.cGray + e.getPlayer().getName() + " >> " + C.cWhite + message);
+                hubPlayer.sendMessage(Message.of("").green("[").gray("Hub").green("] ").gray(e.getPlayer().getName() + " >> ").white(message));
             }
             MsdmPlugin.info("[Hub] " + e.getPlayer().getName() + " > " + message);
             return;

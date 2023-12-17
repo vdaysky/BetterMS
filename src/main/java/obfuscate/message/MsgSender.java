@@ -1,6 +1,13 @@
 package obfuscate.message;
 
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
+import obfuscate.MsdmPlugin;
 import obfuscate.util.chat.C;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public enum MsgSender
 {
@@ -13,6 +20,8 @@ public enum MsgSender
     CMD("§8§l[§6CMD§8§l]", "§8:§r"),
     LOBBY("[Lobby]", " >> "),
     RANK("[RankMe]", " >> "),
+
+    MPS(C.cBlue + "MyPlayerServer> " + C.Reset, "§8>>§r "),
 
     JOIN(C.cDGray + "Join> " + C.cGray, " "),
     LEAVE(C.cDGray + "Quit> " + C.cGray, " "),
@@ -36,8 +45,20 @@ public enum MsgSender
         return _suffix;
     }
 
-    public String form(String message)
-    {
+    public String form(String message) {
         return getPrefix() + getSuffix() + message;
+    }
+
+    public TextComponent form(TextComponent message) {
+        TextComponent root = new TextComponent();
+
+        BaseComponent component = root;
+
+        for (BaseComponent c : TextComponent.fromLegacyText(getPrefix() + getSuffix())) {
+            component.addExtra(c);
+            component = c;
+        }
+        component.addExtra(message);
+        return root;
     }
 }

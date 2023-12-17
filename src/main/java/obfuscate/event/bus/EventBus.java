@@ -4,6 +4,8 @@ import obfuscate.util.java.Pair;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class EventBus {
@@ -35,8 +37,13 @@ public class EventBus {
 
         ArrayList<Integer> toRemove = new ArrayList<>();
 
-        for (Integer subId : handlers.keySet()) {
+        for (Integer subId : new HashSet<>(handlers.keySet())) {
             Pair<Integer, Function<Object, Boolean>> handler = handlers.get(subId);
+
+            // not sure how, but probably callback can do some concurrent modification
+            if (handler == null) {
+                continue;
+            }
 
             if (handler.getFirst() != null) {
                 if ( handler.getFirst() <= 0) {
@@ -52,6 +59,7 @@ public class EventBus {
             if (ret != null && ret) {
                 toRemove.add(subId);
             }
+
             if (handler.getFirst() != null && handler.getFirst() <= 0) {
                 toRemove.add(subId);
             }

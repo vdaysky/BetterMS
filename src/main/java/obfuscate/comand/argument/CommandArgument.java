@@ -30,5 +30,7 @@ public interface CommandArgument<T> {
 
     List<String> getStaticOptions();
 
-    boolean isGreedy();
+    default boolean isGreedy() {
+        return false;
+    };
 }

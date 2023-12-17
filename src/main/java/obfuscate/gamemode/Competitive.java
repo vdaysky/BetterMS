@@ -22,10 +22,10 @@ import obfuscate.mechanic.item.guns.GunStats;
 import obfuscate.mechanic.item.melee.Knife;
 import obfuscate.mechanic.item.objective.Compass;
 import obfuscate.message.MsgSender;
-import obfuscate.message.MsgType;
 import obfuscate.team.StrikeTeam;
 
 import obfuscate.util.chat.C;
+import obfuscate.util.chat.Message;
 import org.bukkit.Location;
 
 public class Competitive extends DefusalGame
@@ -72,19 +72,21 @@ public class Competitive extends DefusalGame
             roundKillStreak.getOrDefault(e.getDamager(), 0) + 1
         );
 
-        StrikeItem item = e.getDamager().getHeldItem(this);
-        int amount;
+        if (is(ConfigField.GIVE_KILL_MONEY)) {
+            StrikeItem item = e.getDamager().getHeldItem(this);
+            int amount;
 
-        if (item instanceof Gun gun) {
-            amount = gun.getKillReward();
-        }
-        else if (item instanceof Knife) {
-            amount = 1500;
-        } else {
-            amount = 300;
-        }
+            if (item instanceof Gun gun) {
+                amount = gun.getKillReward();
+            }
+            else if (item instanceof Knife) {
+                amount = 1500;
+            } else {
+                amount = 300;
+            }
 
-        getShopManager().addToBalance(e.getDamager(), amount);
+            getShopManager().addToBalance(e.getDamager(), amount);
+        }
     }
 
     @LocalEvent(priority = LocalPriority.PRE_HIGH)
@@ -151,12 +153,8 @@ public class Competitive extends DefusalGame
     @LocalEvent
     protected void onOvertimeStart(OvertimeStartEvent e)
     {
-        // set money, clear inventory
-        // overtimes are handled just like normal rounds except max rounds value will be different
-        broadcast(
-            MsgSender.NONE,
-            C.cGreen + "Overtime #" + C.cYellow + (e.getOvertimeIndex() + 1) + C.cGreen + " started",
-            MsgType.SUBTITLE
+        broadcastSubtitle(
+            Message.n().green("Overtime #").yellow("" + e.getOvertimeIndex() + 1).green(" started")
         );
     }
 

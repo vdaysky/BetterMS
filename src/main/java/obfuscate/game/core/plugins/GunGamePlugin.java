@@ -23,8 +23,6 @@ import obfuscate.mechanic.item.guns.GunStats;
 import obfuscate.mechanic.item.guns.Shotgun;
 import obfuscate.mechanic.item.melee.Knife;
 import obfuscate.mechanic.item.utility.grenade.HighExplosive;
-import obfuscate.message.MsgSender;
-import obfuscate.message.MsgType;
 import obfuscate.util.time.Task;
 
 import java.util.ArrayList;
@@ -112,6 +110,7 @@ public class GunGamePlugin implements IPlugin<Competitive> {
         instance.getConfig().setValue(instance, ConfigField.INFINITE_AMMO, 2);
         instance.getConfig().setValue(instance, ConfigField.CAN_SEE_TEAM_NAMES, 0);
         instance.getConfig().setValue(instance, ConfigField.KEEP_INVENTORY, 1);
+        instance.getConfig().setValue(instance, ConfigField.GIVE_KILL_MONEY, 0);
     }
 
     @LocalEvent
@@ -157,9 +156,7 @@ public class GunGamePlugin implements IPlugin<Competitive> {
         );
 
         if (winner != null) {
-            instance.broadcast(
-                    MsgSender.NONE,  winner.getName() + " Won the game!", MsgType.SUBTITLE
-            );
+            instance.broadcastSubtitle(winner.getName() + " Won the game!");
         }
     }
 

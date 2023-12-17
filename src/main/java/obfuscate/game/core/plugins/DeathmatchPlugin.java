@@ -37,6 +37,7 @@ public class DeathmatchPlugin implements IPlugin<Competitive> {
         config.setValue(instance, ConfigField.ITEM_DESTROY_ON_DROP, 1);
         config.setValue(instance, ConfigField.MIN_PLAYERS, 2);
         config.setValue(instance, ConfigField.ALLOW_ITEM_DROP, 0);
+        config.setValue(instance, ConfigField.GIVE_KILL_MONEY, 0);
 
         ISharedContext traits = instance.getSharedContext();
 

@@ -1,8 +1,10 @@
 package obfuscate.game.core;
 
+import net.md_5.bungee.api.chat.*;
 import obfuscate.MsdmPlugin;
 import obfuscate.event.LocalEvent;
 import obfuscate.event.LocalPriority;
+import obfuscate.event.NativeEvent;
 import obfuscate.event.bukkit.BulletHitEvent;
 import obfuscate.event.bukkit.BulletHitPlayerEvent;
 import obfuscate.event.custom.CancellableEvent;
@@ -10,12 +12,11 @@ import obfuscate.event.custom.backend.player.PlayerGameConnectEvent;
 import obfuscate.event.custom.config.ConfigFieldChangeEvent;
 import obfuscate.event.custom.gamestate.*;
 import obfuscate.event.custom.intent.CreateGameIntentEvent;
-import obfuscate.event.custom.intent.PlayerJoinGameIntentEvent;
 import obfuscate.event.custom.damage.*;
 import obfuscate.event.custom.game.*;
-import obfuscate.event.custom.intent.PlayerLeaveGameIntentEvent;
 import obfuscate.event.custom.item.*;
 import obfuscate.event.custom.item.grenade.GrenadeThrowEvent;
+import obfuscate.event.custom.item.gun.ReloadEndEvent;
 import obfuscate.event.custom.item.gun.bullet.BulletStopEvent;
 import obfuscate.event.custom.item.gun.bullet.BulletWallbangEvent;
 import obfuscate.event.custom.player.*;
@@ -59,7 +60,6 @@ import obfuscate.mechanic.version.hitbox.CustomHitboxV1;
 import obfuscate.mechanic.version.hitbox.Hitbox;
 import obfuscate.mechanic.version.hitbox.SniperReducedHitbox;
 import obfuscate.message.MsgSender;
-import obfuscate.message.MsgType;
 import obfuscate.network.models.schemas.GameData;
 import obfuscate.network.models.responses.IntentResponse;
 import obfuscate.podcrash.ACFeature;
@@ -70,6 +70,7 @@ import obfuscate.util.block.UtilBlock;
 import obfuscate.util.chat.C;
 import obfuscate.util.chat.ChatTable;
 import obfuscate.util.chat.Format;
+import obfuscate.util.chat.Message;
 import obfuscate.util.java.Pair;
 import obfuscate.util.recahrge.Recharge;
 import obfuscate.util.sidebar.UniqueSidebar;
@@ -81,10 +82,6 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import net.citizensnpcs.api.trait.Trait;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.*;
 import org.bukkit.Effect;
 import org.bukkit.block.Block;
@@ -129,6 +126,8 @@ public abstract class Game extends GameData implements IGame {
 
     private final SharedGameContext traits = new SharedGameContext();
 
+    private final long createdAt = System.currentTimeMillis();
+
     private AtomicLong v1_8_spacerBarExpiresAt = new AtomicLong(0);
     private BossBar v1_8_spacerBar;
 
@@ -157,6 +156,8 @@ public abstract class Game extends GameData implements IGame {
     private GameStateInstance currentGameState = new GameStateInstance("Warmup", GeneralGameStage.WARM_UP);
     private int currentGameStateDuration = -1;
 
+    private final AsyncNetIntents asyncNetIntents = new AsyncNetIntents(this);
+
     Scoreboard teamAScoreboard;
 
     Scoreboard teamBScoreboard;
@@ -164,7 +165,6 @@ public abstract class Game extends GameData implements IGame {
     Objective teamAHealthObjective;
 
     Objective teamBHealthObjective;
-
 
     public void setGameState(GameStateInstance i) {
 //        MsdmPlugin.highlight("Set game state to " + i.getGeneralStage().getNiceName());
@@ -180,6 +180,14 @@ public abstract class Game extends GameData implements IGame {
     public void setGameState(GeneralGameStage stage, Integer duration) {
         setGameState(new GameStateInstance(stage.getNiceName(), stage));
         currentGameStateDuration = duration;
+    }
+
+    public long getCreatedAt() {
+        return createdAt;
+    }
+
+    public AsyncNetIntents net() {
+        return asyncNetIntents;
     }
 
     public GameStateInstance getGameState() {
@@ -210,22 +218,12 @@ public abstract class Game extends GameData implements IGame {
         return dataRegistry;
     }
 
-    /** Player Management */
-
-    // list of active spectators in game. updated when player joins or leaves.
-    // spectators are not handled by backend, so they are updated on mc side
-    private final List<StrikePlayer> _spectators = new ArrayList<>();
-
-    // all players that are in game world right now
-    @Deprecated
-    private final List<StrikePlayer> _onlinePlayers = new ArrayList<>();
-
     // list of all players that ever joined. this list will never decrease
     // TODO: try to replace with players that have game sessions which should be exactly same
     @Deprecated
     private final Set<StrikePlayer> _everPresentPlayers = new HashSet<>();
 
-    private final HashSet<Grenade> thrownNades = new HashSet<>();
+    private final HashSet<Grenade> thrownGrenades = new HashSet<>();
 
     public void initGame() {
         MsdmPlugin.highlight("initGame called");
@@ -243,6 +241,68 @@ public abstract class Game extends GameData implements IGame {
         if (!getSharedContext().defersGameStart()) {
             startGame();
         }
+    }
+
+    @Override
+    public void setupInventory(StrikePlayer player) {
+        // this will sync player's inventory with his session.
+        // if he joined for first time, it will empty his inventory
+        // spectators don't have inventories though
+        if (!getGameSession(player).isSpectating()) {
+            getGameSession(player).getInventory().restore(this);
+        }
+    }
+
+    @Override
+    public @Nullable Promise<Boolean> tryJoinPlayer(StrikePlayer player, boolean spec, @Nullable StrikeTeam team) {
+
+        player.sendMessage(MsgSender.SERVER, C.cGray + "Connecting to game#" + getId().getObjId() + "...");
+
+        // whitelist and server capacity check
+        if (!canJoin(player, spec)) {
+            player.sendMessage(MsgSender.SERVER, ChatColor.RED + "You are not allowed to join this server!");
+            return null;
+        }
+
+        return asyncNetIntents.tryJoinPlayer(player, spec, team).thenSync(
+            e -> {
+                if (e.isSuccess()) {
+                    player.sendMessage(MsgSender.SERVER, ChatColor.GREEN + e.getMessage());
+                } else {
+                    player.sendMessage(MsgSender.SERVER, ChatColor.RED + e.getMessage());
+                }
+                return e.isSuccess();
+            }
+        );
+    }
+
+    public @Nullable Promise<Boolean> tryLeavePlayer(StrikePlayer player) {
+        MsdmPlugin.logger().info("Player " + player.getName() + " left the game.");
+
+        if (getGameSession(player).getStatus() == PlayerStatus.PARTICIPATING) {
+            if (!isEnded() && getGameSession(player).isAlive()) {
+                // actually kill player.
+                // so much easier than simulating it.
+                new PlayerDeathEvent(
+                        this,
+                        player,
+                        player,
+                        new DamageSourceWrapper(""),
+                        DamageReason.NONE,
+                        new DamageModifiers()
+                ).trigger();
+            }
+        }
+        return asyncNetIntents.tryLeavePlayer(player).thenSync(
+            e -> {
+                if (e.isSuccess()) {
+                    player.sendMessage(MsgSender.SERVER, C.cGray + "You left the game.");
+                } else {
+                    player.sendMessage(MsgSender.SERVER, C.cRed + "Failed to leave the game.");
+                }
+                return e.isSuccess();
+            }
+        );
     }
 
     public int getRoundKillStreak(StrikePlayer player) {
@@ -344,99 +404,6 @@ public abstract class Game extends GameData implements IGame {
         currentGameStateDuration--;
     }
 
-    /* Player Management */
-
-    @Override
-    public Promise<? extends IntentResponse> tryLeavePlayer(StrikePlayer player) {
-
-        _onlinePlayers.remove(player);
-
-        MsdmPlugin.logger().info("Player " + player.getName() + " left the game.");
-
-        if (getGameSession(player).getStatus() == PlayerStatus.PARTICIPATING) {
-            if (!isEnded() && getGameSession(player).isAlive())
-            {
-                // actually kill player.
-                // so much easier than simulating it.
-                new PlayerDeathEvent(
-                        this,
-                        player,
-                        player,
-                        new DamageSourceWrapper(""),
-                        DamageReason.NONE,
-                        new DamageModifiers()
-                ).trigger();
-            }
-        }
-
-        if (getGameSession(player).getStatus() == PlayerStatus.SPECTATING) {
-            _spectators.remove(player);
-        }
-
-        return new PlayerLeaveGameIntentEvent(this, player).trigger().thenSync(
-            intentResponse -> {
-                if (player.isOnline()) {
-                    player.clearBukkitInventory();
-                }
-                return intentResponse;
-            }
-        );
-    }
-
-    @Override
-    public Promise<? extends IntentResponse> tryJoinPlayer(StrikePlayer player, StrikeTeam team, boolean spec) {
-        return new PlayerJoinGameIntentEvent(this, team, player, spec).trigger();
-    }
-
-    @Override
-    public Promise<? extends IntentResponse> tryJoinPlayer(StrikePlayer player, boolean spec, StrikeTeam team) {
-        return new PlayerJoinGameIntentEvent(this, team, player, spec).trigger();
-    }
-
-    public Promise<? extends IntentResponse> tryJoinPlayerWithMessages(StrikePlayer player, boolean spec, StrikeTeam team) {
-
-        player.sendMessage(MsgSender.SERVER, C.cGray + "Connecting to game#" + getId().getObjId() + "...");
-
-        if (canJoin(player, spec)) {
-            return tryJoinPlayer(player, spec, team).thenSync(
-                    e -> {
-                        if (e.isSuccess()) {
-                            player.sendMessage(MsgSender.SERVER, ChatColor.GREEN + e.getMessage());
-                        } else {
-                            player.sendMessage(MsgSender.SERVER, ChatColor.RED + e.getMessage());
-                        }
-                        return null;
-                    }
-            );
-        }
-        else {
-            player.sendMessage(MsgSender.SERVER, ChatColor.RED + "You are not allowed to join this server!");
-        }
-        return null;
-    }
-
-    @Override
-    public Promise<? extends IntentResponse> tryJoinPlayer(StrikePlayer player, boolean spec) {
-        return tryJoinPlayer(player, spec, null);
-    }
-
-//    @Override
-//    public GameStateManager getStateManager()
-//    {
-//        if (stateManager == null) {
-//            MsdmPlugin.highlight("Initializing state manager with states " + getSharedContext().getStages());
-//
-//            // game will have stages defined in traits
-//            // which makes it possible to change states in plugins on initialization
-//            stateManager = new GameStateManager(
-//                    this,
-//                    getSharedContext().getStages()
-//            );
-//        }
-//
-//        return stateManager;
-//    }
-
     @Override
     public String getGameName() {
         return getSharedContext().getModeName();
@@ -464,51 +431,60 @@ public abstract class Game extends GameData implements IGame {
 
     /* Broadcasting to players */
 
-    public void broadcast(MsgSender sender, String message, MsgType type, Object ... args)
-    {
-        for (StrikePlayer player : getOnlinePlayers())
-        {
-            if (type == MsgType.CHAT)
-                player.getPlayer().sendMessage(sender.form(message));
-            if (type == MsgType.HOTBAR)
-                player.sendMessage(sender.form(message));
-            if (type == MsgType.TITLE || type == MsgType.SUBTITLE)
-            {
-                int fadeIn = 0;
-                int fadeOut = 0;
-                int stay = 100;
-
-                if (args.length > 0)
-                {
-                    if (args[0] instanceof Integer)
-                    {
-                        fadeIn = (int) args[0];
-                    }
-                    if (args.length > 1 && args[1] instanceof Integer)
-                    {
-                        stay = (int) args[1];
-                    }
-                    if (args.length > 2 && args[2] instanceof Integer)
-                    {
-                        fadeOut = (int) args[2];
-                    }
-                }
-
-                if (type == MsgType.SUBTITLE)
-                    player.sendTitle(" ", sender.form(message), fadeIn, stay, fadeOut);
-                else
-                    player.sendTitle(sender.form(message), " ", fadeIn, stay, fadeOut);
-            }
-
-            if (type == MsgType.BOSSBAR)
-            {
-                int percent = 100;
-                if (args.length == 1 && args[0] instanceof Integer)
-                    percent = (Integer) args[0];
-
-                player.setBossbar(message, percent);
-            }
+    public void broadcastChat(MsgSender sender, TextComponent text) {
+        for (StrikePlayer player : getOnlinePlayers()) {
+            player.getPlayer().spigot().sendMessage(sender.form(text));
         }
+    }
+
+    public void broadcastChat(MsgSender sender, String text) {
+        for (StrikePlayer player : getOnlinePlayers()) {
+            player.sendMessage(sender.form(text));
+        }
+    }
+
+    public void broadcastChat(MsgSender sender, Message text) {
+        broadcastChat(sender, text.build());
+    }
+
+    public void broadcastTitleSubtitle(String title, String subtitle, int fadeIn, int stay, int fadeOut) {
+        for (StrikePlayer player : getOnlinePlayers()) {
+            player.sendTitle(title, subtitle, fadeIn, stay, fadeOut);
+        }
+    }
+
+    public void broadcastTitle(String title, int fadeIn, int stay, int fadeOut) {
+        for (StrikePlayer player : getOnlinePlayers()) {
+            player.sendTitle(title, "", fadeIn, stay, fadeOut);
+        }
+    }
+
+    public void broadcastTitle(String title) {
+        for (StrikePlayer player : getOnlinePlayers()) {
+            player.sendTitle(title, "", 0, 40, 0);
+        }
+    }
+
+    public void broadcastSubtitle(String subtitle, int fadeIn, int stay, int fadeOut) {
+        for (StrikePlayer player : getOnlinePlayers()) {
+            player.sendTitle("", subtitle, fadeIn, stay, fadeOut);
+        }
+    }
+
+    public void broadcastSubtitle(TextComponent subtitle, int fadeIn, int stay, int fadeOut) {
+        broadcastSubtitle(subtitle.toLegacyText(), fadeIn, stay, fadeOut);
+    }
+
+    public void broadcastSubtitle(String subtitle) {
+        broadcastSubtitle(subtitle, 0, 40, 0);
+    }
+
+    public void broadcastSubtitle(TextComponent subtitle) {
+        broadcastSubtitle(subtitle.toLegacyText(), 0, 40, 0);
+    }
+
+    public void broadcastSubtitle(Message subtitle) {
+        broadcastSubtitle(subtitle.build(), 0, 40, 0);
     }
 
     public String getPlayerTeamColor(StrikePlayer player) {
@@ -656,10 +632,8 @@ public abstract class Game extends GameData implements IGame {
     private void freezeTimeEndSound(FreezeTimeEndEvent e) {
         getTRadio().roundStart();
         getCTRadio().roundStart();
-        e.getGame().broadcast(
-                MsgSender.NONE,
+        e.getGame().broadcastTitle(
                 C.cGreen + "Go!",
-                MsgType.TITLE,
                 0, 40, 0
         );
     }
@@ -720,10 +694,9 @@ public abstract class Game extends GameData implements IGame {
             return;
         }
 
-        broadcast(
+        broadcastChat(
                 MsgSender.GAME,
-                "Game will be force-started in " + C.cYellow + seconds + C.cWhite + " seconds",
-                MsgType.CHAT
+                Message.of("Game will be force-started in ").yellow("" + seconds).gray(" seconds")
         );
 
         new Task(
@@ -783,21 +756,23 @@ public abstract class Game extends GameData implements IGame {
             suffix = " (" + e.getGame().getOnlineDeadOrAliveParticipants().size() + "/" + e.getGame().getMaxPlayers() + ")";
         }
 
-        e.getGame().broadcast(
+        e.getGame().broadcastChat(
                 MsgSender.JOIN,
-                e.getPlayer().getName() + ", " + rosterName + suffix,
-                MsgType.CHAT
+                e.getPlayer().getName() + ", " + rosterName + suffix
         );
     }
 
     @LocalEvent
-    private void greetPlayerOnJoin(PlayerLeaveGameEvent e)
+    private void notifyGamePlayersOfLeftPlayer(PlayerLeaveGameEvent e)
     {
-        e.getGame().broadcast(
-                MsgSender.LEAVE,
-                e.getPlayer().getName(),
-                MsgType.CHAT
-        );
+        e.getGame().broadcastChat(MsgSender.LEAVE, e.getPlayer().getName());
+    }
+
+    @LocalEvent
+    @NativeEvent
+    private void handlePlayerLeft(PlayerLeaveGameEvent e) {
+        MsdmPlugin.getGameServer().getFallbackServer().join(e.getPlayer());
+        e.getPlayer().sendMessage(MsgSender.SERVER, ChatColor.GRAY + "You were moved to hub from game#" + getId().getObjId());
     }
 
     @LocalEvent(cascade = true, priority = LocalPriority.PRE)
@@ -932,11 +907,7 @@ public abstract class Game extends GameData implements IGame {
         else
             killFeed = e.getDamagee().getShortChatName(this) + C.cGray + " was killed by " + (useIcons ? C.Reset : C.cGreen) + e.getDescription(useIcons) + C.cGray + ".";
 
-        broadcast(
-                MsgSender.GAME,
-                killFeed,
-                MsgType.CHAT
-        );
+        broadcastChat(MsgSender.GAME, killFeed);
 
         // bar expired
         if (v1_8_spacerBarExpiresAt.get() < System.currentTimeMillis()) {
@@ -961,6 +932,15 @@ public abstract class Game extends GameData implements IGame {
         ).run();
 
         broadcastBossBar(" ".repeat(120) + killFeed, 10);
+
+        // cancel reload of all guns on death
+        for (Gun gun : getGameSession(e.getDamagee()).getInventory().getGuns()) {
+            gun.cancelReload(
+                e.getGame(),
+                e.getDamagee(),
+                ReloadEndEvent.ReloadEndReason.DEATH
+            );
+        }
     }
 
     @Override
@@ -1055,12 +1035,8 @@ public abstract class Game extends GameData implements IGame {
         boolean rejoined = _everPresentPlayers.contains(player);
         _everPresentPlayers.add(player);
 
-        // save player as online, no matter if he spectates or not
-        _onlinePlayers.add(player);
-
         MsdmPlugin.logger().info("Player " + player.getName() + " joined");
         if (spectate) {
-            _spectators.add(player);
             MsdmPlugin.logger().info("Player " + player.getName() + " spectates");
         }
         else {
@@ -1086,13 +1062,6 @@ public abstract class Game extends GameData implements IGame {
         getGameSession(player).setAlive(false);
 
         boolean willSpectate = !currentGameState.is(StateTag.JOINABLE) || spectate;
-
-        // this will sync player's inventory with his session.
-        // if he joined for first time, it will empty his inventory
-        // spectators don't have inventories though
-        if (!spectate) {
-            getGameSession(player).getInventory().restore(this);
-        }
 
         // respawn will respawn player depending on its state.
         // state was set already so everything gud
@@ -1268,7 +1237,7 @@ public abstract class Game extends GameData implements IGame {
     public void updateGrenadesAndBullets()
     {
         //Grenades
-        Iterator<Grenade> grenadeIterator = thrownNades.iterator();
+        Iterator<Grenade> grenadeIterator = thrownGrenades.iterator();
 
         while (grenadeIterator.hasNext())
         {
@@ -1333,7 +1302,7 @@ public abstract class Game extends GameData implements IGame {
     @LocalEvent
     private void broadcastStartCancelMessage(GameStartCancelEvent e)
     {
-        broadcast(MsgSender.GAME, "Game start cancelled", MsgType.CHAT);
+        broadcastChat(MsgSender.GAME, "Game start cancelled");
     }
 
     @LocalEvent
@@ -1869,7 +1838,7 @@ public abstract class Game extends GameData implements IGame {
     }
 
     @Override
-    public void broadcast(InGameTeamData roster, String message) {
+    public void broadcastChat(InGameTeamData roster, String message) {
         for (StrikePlayer player : getOnline(roster)) {
             player.sendMessage(message);
         }
@@ -2036,11 +2005,6 @@ public abstract class Game extends GameData implements IGame {
     public void endGame(InGameTeamData winner, InGameTeamData looser) {
         new PreGameEndEvent(this, winner, looser).trigger();
 
-        // clear player inventories
-        for (GameSession session : getGameSessions()) {
-            session.getInventory().clear();
-        }
-
         if (is(ConfigField.CREATE_NEW_ON_COMPLETION)) {
             Promise<? extends IntentResponse> response = new CreateGameIntentEvent(null, getMode().name(), null).trigger();
 
@@ -2109,9 +2073,17 @@ public abstract class Game extends GameData implements IGame {
         currentGameState = endedState;
         currentGameStateDuration = 30;
 
-        broadcast(MsgSender.NONE, "", MsgType.CHAT);
-        broadcast(MsgSender.GAME, C.cGold + C.Bold + "Game Ended!", MsgType.CHAT);
-        broadcast(MsgSender.NONE, "", MsgType.CHAT);
+        broadcastChat(MsgSender.NONE, "");
+        broadcastChat(MsgSender.GAME, C.cGold + C.Bold + "Game Ended!");
+
+        var gameLink = Message.n().boldGreen("<here>").link(Link.game(getId().getObjId())).hover("Click to view game stats");
+
+        broadcastChat(
+            MsgSender.GAME,
+            Message.of("Your stats are available ").append(gameLink)
+        );
+
+        broadcastChat(MsgSender.NONE, "");
 
         new Task(()->{
             for (StrikePlayer player : new ArrayList<>(getOnlinePlayers())) {
@@ -2140,7 +2112,7 @@ public abstract class Game extends GameData implements IGame {
     @Override
     public void registerThrownGrenade(Grenade grenade)
     {
-        thrownNades.add(grenade);
+        thrownGrenades.add(grenade);
     }
 
     @LocalEvent(cascade = true)
@@ -2166,7 +2138,7 @@ public abstract class Game extends GameData implements IGame {
     @Override
     public void restart()
     {
-        broadcast(MsgSender.GAME, "Restarting...", MsgType.CHAT);
+        broadcastChat(MsgSender.GAME, "Restarting...");
 
         // start warm up and stuff
         new GameInitEvent(this).trigger();
@@ -2422,10 +2394,10 @@ public abstract class Game extends GameData implements IGame {
     public void deleteNades()
     {
         // remove item entities
-        for (Grenade grenade : thrownNades) {
+        for (Grenade grenade : thrownGrenades) {
             grenade.removeEntity();
         }
-        thrownNades.clear();
+        thrownGrenades.clear();
     }
 
     @Override

@@ -5,6 +5,7 @@ import obfuscate.util.time.Scheduler;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Stream;
@@ -111,6 +112,13 @@ public class Promise<T> {
         });
 
         return promise;
+    }
+
+    public Promise<T> thenSyncConsumer(Consumer<T> x) {
+        return thenSync(y -> {
+            x.accept(y);
+            return y;
+        });
     }
 
     public static Promise<Void> gather(Promise<?> ... promises) {

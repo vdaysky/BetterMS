@@ -44,4 +44,8 @@ public class ParsedArgument<T> {
     public T getParsedValue() {
         return parsedValue;
     }
+
+    public ParsedArgument<?> copy() {
+        return new ParsedArgument<>(value, declaration, isPositional, isInvalid, parsedValue);
+    }
 }

@@ -54,7 +54,7 @@ public class BotPlayer extends StrikePlayer
     }
 
     @Override
-    public Gun getGunInHand(Game game) {
+    public Gun getGunInHand(IGame game) {
         return null;
     }
 
@@ -100,26 +100,6 @@ public class BotPlayer extends StrikePlayer
 
     @Override
     public void sendHotBar(String message) {
-
-    }
-
-    @Override
-    public boolean isDisguised() {
-        return false;
-    }
-
-    @Override
-    public void stopDisguise() {
-
-    }
-
-    @Override
-    public void toggleDisguise() {
-
-    }
-
-    @Override
-    public void setDisguise() {
 
     }
 

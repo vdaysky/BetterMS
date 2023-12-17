@@ -1,5 +1,6 @@
 package obfuscate.game.core;
 
+import obfuscate.Lobby;
 import obfuscate.event.CustomListener;
 import obfuscate.event.custom.round.RoundWinEvent;
 import obfuscate.game.config.ConfigField;
@@ -9,14 +10,13 @@ import obfuscate.game.damage.DamageLog;
 import obfuscate.game.damage.DamageManager;
 import obfuscate.game.player.BotPlayer;
 import obfuscate.game.player.StrikePlayer;
+import obfuscate.game.sound.GameSoundManager;
 import obfuscate.game.state.GameStateInstance;
 import obfuscate.game.state.GeneralGameStage;
 import obfuscate.gamemode.registry.GameMode;
 import obfuscate.mechanic.item.guns.Bullet;
 import obfuscate.mechanic.version.hitbox.Hitbox;
 import obfuscate.message.MsgSender;
-import obfuscate.message.MsgType;
-import obfuscate.network.models.responses.IntentResponse;
 import obfuscate.team.PlayerGroup;
 import obfuscate.game.restore.RestoreManger;
 import obfuscate.game.shop.ShopManager;
@@ -39,7 +39,7 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 
-public interface IGame extends CustomListener {
+public interface IGame extends CustomListener, Lobby {
     void registerRoundTask(Task task);
 
     void stopTasks();
@@ -114,8 +114,9 @@ public interface IGame extends CustomListener {
 
     void winRound(StrikeTeam team, RoundWinEvent.Reason reason);
 
-    void broadcast(InGameTeamData roster, String message);
-    void broadcast(MsgSender sender, String message, MsgType type, Object ... args);
+    void broadcastChat(MsgSender sender, String text);
+
+    void broadcastChat(InGameTeamData roster, String message);
 
     void registerThrownGrenade(Grenade grenade);
 
@@ -237,14 +238,14 @@ public interface IGame extends CustomListener {
     ShopManager getShopManager();
 
     /** Send command to backend asking to leave */
-    Promise<? extends IntentResponse> tryLeavePlayer(StrikePlayer player);
+    Promise<Boolean> tryLeavePlayer(StrikePlayer player);
 
     /** Send command to backend asking to join */
-    Promise<?> tryJoinPlayer(StrikePlayer player, boolean spec);
+    default Promise<Boolean> tryJoinPlayer(StrikePlayer player, boolean spec) {
+        return tryJoinPlayer(player, spec, null);
+    }
 
-    Promise<?> tryJoinPlayer(StrikePlayer player, boolean spec, StrikeTeam team);
-
-    Promise<?> tryJoinPlayer(StrikePlayer player, StrikeTeam team, boolean spec);
+    Promise<Boolean> tryJoinPlayer(StrikePlayer player, boolean spec, StrikeTeam team);
 
     boolean shouldSwapSides();
 
@@ -269,4 +270,8 @@ public interface IGame extends CustomListener {
     Hitbox getPlayerHitbox(Bullet bullet);
 
     void setGameState(GameStateInstance deathMatch, Integer duration);
+
+    GameSoundManager getSoundManager();
+
+    long getCreatedAt();
 }

@@ -2,6 +2,7 @@ package obfuscate.event.custom.intent;
 
 import obfuscate.event.Tracked;
 import obfuscate.event.custom.IntentEvent;
+import obfuscate.game.core.IGame;
 import obfuscate.game.player.StrikePlayer;
 import obfuscate.gamemode.Competitive;
 import obfuscate.util.serialize.dump.Serializable;
@@ -16,7 +17,7 @@ public class ChangePlayerBlacklistStatusAtGameIntent extends IntentEvent {
     private final StrikePlayer manager;
 
     @Serializable
-    private final Competitive game;
+    private final IGame game;
 
     @Serializable
     private final boolean isBlacklisted;
@@ -25,7 +26,7 @@ public class ChangePlayerBlacklistStatusAtGameIntent extends IntentEvent {
     private final String reason;
 
 
-    public ChangePlayerBlacklistStatusAtGameIntent(StrikePlayer player, StrikePlayer manager, Competitive game, boolean isBlacklisted, String reason) {
+    public ChangePlayerBlacklistStatusAtGameIntent(StrikePlayer player, StrikePlayer manager, IGame game, boolean isBlacklisted, String reason) {
         this.player = player;
         this.game = game;
         this.manager = manager;
@@ -41,7 +42,7 @@ public class ChangePlayerBlacklistStatusAtGameIntent extends IntentEvent {
         return manager;
     }
 
-    public Competitive getGame() {
+    public IGame getGame() {
         return game;
     }
 

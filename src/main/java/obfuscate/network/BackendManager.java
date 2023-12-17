@@ -52,6 +52,10 @@ public class BackendManager implements CustomListener {
         return trackedModels.get(pk);
     }
 
+    public List<SyncableObject> getByEntity(String ent) {
+        return trackedModels.values().stream().filter(x -> x.getModelName().equals(ent)).toList();
+    }
+
     private static String objectIdToPrimitive(ObjectId objectId) {
         return objectId.getEntity().toLowerCase().replace("_", "") + ":" + objectId.getObjId();
 
@@ -350,5 +354,15 @@ public class BackendManager implements CustomListener {
         }
         return chain;
 
+    }
+
+
+    public List<String> getEntityNames() {
+        var all = trackedModels.values().stream().map(x -> x.getId().getEntity()).toList();
+        return new ArrayList<>(new HashSet<>(all));
+    }
+
+    public List<Integer> getSyncedIds(String ent) {
+        return trackedModels.values().stream().filter(x -> x.getId().getEntity().equals(ent)).map(x -> x.getId().getObjId()).toList();
     }
 }

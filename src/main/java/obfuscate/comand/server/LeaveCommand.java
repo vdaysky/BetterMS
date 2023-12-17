@@ -19,11 +19,7 @@ public class LeaveCommand implements CommandExecutor {
             return false;
         }
 
-        game.tryLeavePlayer(ctx.getSender().getPlayer()).thenSync(intentResponse -> {
-            MsdmPlugin.getGameServer().getFallbackServer().join(ctx.getSender().getPlayer());
-            ctx.getSender().sendMessage(MsgSender.SERVER, ChatColor.GRAY + "You were moved to hub from game#" + game.getId().getObjId());
-            return intentResponse;
-        });
+        game.tryLeavePlayer(ctx.getSender().getPlayer());
 
         return true;
 

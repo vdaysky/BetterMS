@@ -65,10 +65,6 @@ public class ServerList {
 
         game.tryJoinPlayer(player, isRightClick).thenSync((x) -> {
             inConnectProgress.remove(player);
-
-            if (!x.isSuccess()) {
-                player.sendMessage(MsgSender.SERVER, C.cRed + "Connection denied: " + x.getMessage());
-            }
             return x;
         });
 

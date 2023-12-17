@@ -86,7 +86,7 @@ public class ObjectId extends Struct {
     @Override
     public boolean equals(Object other) {
         if (other instanceof ObjectId otherId) {
-            return hashCode() == other.hashCode() && entity.equals(otherId.entity) && objId.equals(otherId.objId);
+            return entity.equalsIgnoreCase(otherId.entity) && objId.equals(otherId.objId);
         }
         return false;
     }
@@ -95,13 +95,13 @@ public class ObjectId extends Struct {
         // TODO: this hash function is a fucking disgrace
         int dependenciesHash = 0;
 
-        if (dependencies != null) {
-            for (var dependency : dependencies) {
-                dependenciesHash += dependency.hashCode();
-            }
-        }
+//        if (dependencies != null) {
+//            for (var dependency : dependencies) {
+//                dependenciesHash += dependency.hashCode();
+//            }
+//        }
 
-        return (objId == null ? Integer.MAX_VALUE : objId.hashCode()) + (entity.hashCode() * 1000) + dependenciesHash;
+        return (objId == null ? Integer.MAX_VALUE : objId.hashCode()) + (entity.toLowerCase().hashCode() * 1000) + dependenciesHash;
     }
 
     public Object toMap() {

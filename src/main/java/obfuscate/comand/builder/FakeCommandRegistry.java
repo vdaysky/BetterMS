@@ -1,6 +1,7 @@
 package obfuscate.comand.builder;
 
 import obfuscate.MsdmPlugin;
+import obfuscate.comand.CmdContext;
 import obfuscate.comand.CommandLevel;
 import obfuscate.comand.ExecutionContext;
 import obfuscate.comand.WrappedSender;
@@ -21,6 +22,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.defaults.BukkitCommand;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
@@ -33,6 +35,7 @@ import static java.util.stream.Stream.concat;
 public class FakeCommandRegistry extends BukkitCommand {
 
     private final CommandHandler handler;
+    private static final HashMap<WrappedSender, HashMap<String, Long>> commandExecutionTimes = new HashMap<>();
 
     public FakeCommandRegistry(CommandHandler handler, String name, String[] aliases) {
         super(name, handler.getDescription(), "", new ArrayList<>(Arrays.asList(aliases)));
@@ -284,7 +287,12 @@ public class FakeCommandRegistry extends BukkitCommand {
      *                     Used for parsing knowingly invalid commands while typing them for autocompletion.
      *                     Errors will not be raised in this case.
      * */
-    private CommandLevel ParseCommandLevel(CommandHandler handler, String label, List<String> args, boolean partialParse) throws CommandLevelParseException {
+    private CommandLevel ParseCommandLevel(
+            CommandHandler handler,
+            String label,
+            List<String> args,
+            boolean partialParse
+    ) throws CommandLevelParseException {
 
         ArgSet required = new ArgSet();
         ArgSet optional = new ArgSet();
@@ -328,11 +336,17 @@ public class FakeCommandRegistry extends BukkitCommand {
             return new CommandLevel(handler, required, optional, null, label, nextCmdArgs);
         }
 
+//        required.savepoint();
+//        optional.savepoint();
+
         try {
             String childLabel = nextCmdArgs.get(0);
             CommandLevel child = ParseCommandLevel(next, childLabel, nextCmdArgs.subList(1, nextCmdArgs.size()), partialParse);
             return new CommandLevel(handler, required, optional, child, label, null);
         } catch (CommandLevelParseException e) {
+//            required.rollback();
+//            optional.rollback();
+
             throw new CommandLevelParseException(
                 new CommandLevel(handler, required, optional, e.getLevel(), label, null)
             );
@@ -439,6 +453,13 @@ public class FakeCommandRegistry extends BukkitCommand {
         return executeCommandLevelRecursive(context);
     }
 
+    private long sinceCommandUsage(WrappedSender sender, String commandPath) {
+
+        commandExecutionTimes.putIfAbsent(sender, new HashMap<>());
+        HashMap<String, Long> commandTimes = commandExecutionTimes.get(sender);
+        return (System.currentTimeMillis() - commandTimes.getOrDefault(commandPath, 0L)) / 1000;
+    }
+
     private boolean executeCommandLevelRecursive(ExecutionContext context) {
 
         CommandLevel level = context.getLevel();
@@ -447,7 +468,29 @@ public class FakeCommandRegistry extends BukkitCommand {
 
         Permission requiredBasePermission = level.getHandler().getRequiredPermission();
 
-        if (!sender.hasPermission(requiredBasePermission)) {
+        CmdContext commandContext = level.getHandler().getCommandContext();
+
+        if (commandContext != null) {
+            var scopeObj = commandContext.evalForPlayer(sender);
+            if (scopeObj != null) {
+                context.addScope(scopeObj);
+            }
+        }
+
+        int throttle = level.getHandler().getThrottleSeconds();
+        if (throttle != 0) {
+            String commandPath = level.getFullCommandLabel();
+            long sinceLastUsage = sinceCommandUsage(sender, commandPath);
+            if (sinceLastUsage < throttle) {
+                int toWait = throttle - (int) sinceLastUsage;
+                sender.sendMessage(MsgSender.CMD, ChatColor.RED + "You can't use this command yet! (" + commandPath + " wait " + toWait + "s)");
+                return false;
+            }
+            System.out.println("Save throttle for " + commandPath + " " + System.currentTimeMillis());
+            commandExecutionTimes.get(sender).put(commandPath, System.currentTimeMillis());
+        }
+
+        if (!sender.hasPermission(requiredBasePermission, context.getScopes())) {
             MsdmPlugin.info("Missing permission: " + requiredBasePermission + " for command: " + label);
             sender.sendMessage(MsgSender.CMD, ChatColor.RED + "You don't have permission to do this!");
             return false;
@@ -493,12 +536,20 @@ public class FakeCommandRegistry extends BukkitCommand {
             }
 
             Permission requiredPermission = level.getHandler().getRequiredPermission();
+            var context = new ExecutionContext(level, sender, label);
 
-            if (!sender.hasPermission(requiredPermission)) {
-                return List.of("<HINT: Cant execute this command: Permission required>");
+            CmdContext commandContext = level.getHandler().getCommandContext();
+
+            if (commandContext != null) {
+                var scopeObj = commandContext.evalForPlayer(sender);
+                if (scopeObj != null) {
+                    context.addScope(scopeObj);
+                }
             }
 
-            var context = new ExecutionContext(level, sender, label);
+            if (!sender.hasPermission(requiredPermission, context.getScopes())) {
+                return List.of("<HINT: Cant execute this command: Permission required>");
+            }
 
             String failReason = handler.getCondition().apply(context);
 

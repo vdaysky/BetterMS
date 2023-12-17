@@ -269,4 +269,8 @@ public class GameSession extends SyncableObject
     public boolean isInGame() {
         return _state == PlayerState.IN_GAME;
     }
+
+    public boolean isSpectating() {
+        return _status == PlayerStatus.SPECTATING;
+    }
 }

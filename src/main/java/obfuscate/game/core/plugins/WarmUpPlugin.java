@@ -16,7 +16,6 @@ import obfuscate.game.player.StrikePlayer;
 import obfuscate.game.state.*;
 import obfuscate.gamemode.Competitive;
 import obfuscate.message.MsgSender;
-import obfuscate.message.MsgType;
 import obfuscate.util.chat.C;
 import obfuscate.util.time.Task;
 import org.bukkit.ChatColor;
@@ -54,21 +53,19 @@ public class WarmUpPlugin implements IPlugin<Competitive> {
 
             var minPlayers = instance.get(ConfigField.MIN_PLAYERS);
 
-            instance.broadcast(MsgSender.NONE, "", MsgType.CHAT);
+            instance.broadcastChat(MsgSender.NONE, "");
 
-            instance.broadcast(
+            instance.broadcastChat(
                     MsgSender.GAME,
-                    C.cGray + "Waiting for players to join.",
-                    MsgType.CHAT
+                    C.cGray + "Waiting for players to join."
             );
 
-            instance.broadcast(
+            instance.broadcastChat(
                     MsgSender.GAME,
-                    C.cGray + "Game requires at least " + C.cYellow + minPlayers + C.cGray + " players to start.",
-                    MsgType.CHAT
+                    C.cGray + "Game requires at least " + C.cYellow + minPlayers + C.cGray + " players to start."
             );
 
-            instance.broadcast(MsgSender.NONE, "", MsgType.CHAT);
+            instance.broadcastChat(MsgSender.NONE, "");
 
         }, 0, 20 * 60).run();
     }
@@ -92,31 +89,28 @@ public class WarmUpPlugin implements IPlugin<Competitive> {
             game.setGameState(GeneralGameStage.WARM_UP);
             game.getGameState().removeTag(StateTag.TICKABLE);
             game.setLeftDuration(-1);
-            game.broadcast(MsgSender.NONE, "", MsgType.CHAT);
-            game.broadcast(MsgSender.GAME, ChatColor.RED + "The game has been cancelled!", MsgType.CHAT);
-            game.broadcast(MsgSender.NONE, "", MsgType.CHAT);
+            game.broadcastChat(MsgSender.NONE, "");
+            game.broadcastChat(MsgSender.GAME, ChatColor.RED + "The game has been cancelled!");
+            game.broadcastChat(MsgSender.NONE, "");
         } else { // start countdown
             MsdmPlugin.info("Start game countdown");
             game.getGameState().setTag(StateTag.TICKABLE);
             int warmUpDuration = game.getConfig().getDuration(GeneralGameStage.WARM_UP);
             game.setLeftDuration(warmUpDuration);
 
-            game.broadcast(
+            game.broadcastChat(
                     MsgSender.NONE,
-                    "",
-                    MsgType.CHAT
+                    ""
             );
 
-            game.broadcast(
+            game.broadcastChat(
                     MsgSender.GAME,
-                    C.cWhite + "Starting the game in " + C.cYellow + 60 + C.cWhite + " seconds",
-                    MsgType.CHAT
+                    C.cWhite + "Starting the game in " + C.cYellow + 60 + C.cWhite + " seconds"
             );
 
-            game.broadcast(
+            game.broadcastChat(
                     MsgSender.NONE,
-                    "",
-                    MsgType.CHAT
+                    ""
             );
         }
     }
@@ -157,18 +151,16 @@ public class WarmUpPlugin implements IPlugin<Competitive> {
 
 
         if (e.getGame().getGameState().isWarmup() && durationLeft == 30) {
-            e.getGame().broadcast(
+            e.getGame().broadcastChat(
                     MsgSender.GAME,
-                    C.cWhite + "Starting the game in " + C.cYellow + 30 + C.cWhite + " seconds",
-                    MsgType.CHAT
+                    C.cWhite + "Starting the game in " + C.cYellow + 30 + C.cWhite + " seconds"
             );
         }
 
         if (e.getGame().getGameState().isWarmup() && durationLeft == 10) {
-            e.getGame().broadcast(
+            e.getGame().broadcastChat(
                     MsgSender.GAME,
-                    C.cWhite + "Starting the game in " + C.cYellow + 10 + C.cWhite + " seconds",
-                    MsgType.CHAT
+                    C.cWhite + "Starting the game in " + C.cYellow + 10 + C.cWhite + " seconds"
             );
         }
 
@@ -180,36 +172,26 @@ public class WarmUpPlugin implements IPlugin<Competitive> {
             return;
         }
 
-        if (durationLeft == 0) {
-            e.getGame().broadcast(
-                    MsgSender.NONE,
+        if (durationLeft == 0 && e.getGame().canStart()) {
+            e.getGame().broadcastTitle(
                     C.cGreen + "Live!",
-                    MsgType.TITLE,
                     0, 60, 0
             );
-            e.getGame().broadcast(
+            e.getGame().broadcastChat(
                     MsgSender.GAME,
-                    C.cGreen + "Game is Live!",
-                    MsgType.CHAT,
-                    0, 60, 0
+                    C.cGreen + "Game is Live!"
             );
         }
 
         else if (durationLeft <= 5) {
-            e.getGame().broadcast(
-                    MsgSender.NONE,
+            e.getGame().broadcastTitle(
                     C.cRed + durationLeft,
-                    MsgType.TITLE,
                     0, 20, 0
             );
             e.getGame().getSoundManager().tick().vol(0.5f).play();
         }
         else if (durationLeft <= 10) {
-            e.getGame().broadcast(
-                    MsgSender.NONE,
-                    C.cYellow + durationLeft,
-                    MsgType.TITLE
-            );
+            e.getGame().broadcastTitle(C.cYellow + durationLeft);
             e.getGame().getSoundManager().tick().vol(0.5f).play();
         }
     }
@@ -223,12 +205,12 @@ public class WarmUpPlugin implements IPlugin<Competitive> {
 
     private void printReadyHint(Competitive game)
     {
-        game.broadcast(MsgSender.GAME, C.cGreen  + "Game will start when everyone is " + C.cYellow + "/ready" + C.cGreen + ".", MsgType.CHAT);
-        game.broadcast(MsgSender.GAME, C.cGreen  + "Not ready:", MsgType.CHAT);
+        game.broadcastChat(MsgSender.GAME, C.cGreen  + "Game will start when everyone is " + C.cYellow + "/ready" + C.cGreen + ".");
+        game.broadcastChat(MsgSender.GAME, C.cGreen  + "Not ready:");
 
         for (StrikePlayer player : game.getNotReadyPlayers())
         {
-            game.broadcast(MsgSender.GAME, C.cGreen  +"- " + game.getPlayerRoster(player).getTeam().getColor() + player.getName(), MsgType.CHAT);
+            game.broadcastChat(MsgSender.GAME, C.cGreen  +"- " + game.getPlayerRoster(player).getTeam().getColor() + player.getName());
         }
     }
 
@@ -299,7 +281,7 @@ public class WarmUpPlugin implements IPlugin<Competitive> {
     @LocalEvent
     public void onPlayerReady(PlayerReadyEvent event)
     {
-        event.getGame().broadcast(MsgSender.GAME, C.cYellow + event.getPlayer().getName() + C.cGreen + " is now ready", MsgType.CHAT);
+        event.getGame().broadcastChat(MsgSender.GAME, C.cYellow + event.getPlayer().getName() + C.cGreen + " is now ready");
         new Task(()->checkStartConditions((Competitive) event.getGame()), 20).run();
     }
 

@@ -91,12 +91,9 @@ public class RoleData extends SyncableObject {
 
     public boolean hasPermission(Permission requestedPerm) {
         for (PermissionData presentPerm : getPermissions()) {
-            MsdmPlugin.highlight("Check if " + presentPerm.getName() + " matches " + requestedPerm.getName());
             if (requestedPerm.matches(presentPerm.getName())) {
-                MsdmPlugin.highlight("Matched!");
                 return true;
             }
-            MsdmPlugin.highlight("Not matched!");
         }
         return false;
     }

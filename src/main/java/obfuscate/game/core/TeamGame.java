@@ -23,7 +23,6 @@ import obfuscate.team.InGameTeamData;
 import obfuscate.team.StrikeTeam;
 import obfuscate.game.config.ConfigField;
 import obfuscate.message.MsgSender;
-import obfuscate.message.MsgType;
 import obfuscate.util.Position;
 import obfuscate.util.Promise;
 import obfuscate.util.chat.C;
@@ -167,25 +166,23 @@ public abstract class TeamGame extends PausableGame
 
         String winnerColor = winner.getTeam().getColor();
 
-        broadcast(
-                MsgSender.NONE,
-                winnerColor + ChatColor.BOLD + winnerName + " has won the round!",
-                MsgType.SUBTITLE
+        broadcastSubtitle(
+            winnerColor + ChatColor.BOLD + winnerName + " has won the round!"
         );
 
-        broadcast(MsgSender.NONE, "", MsgType.CHAT);
-        broadcast(MsgSender.NONE, winnerColor + "===================================", MsgType.CHAT);
-        broadcast(MsgSender.NONE, "", MsgType.CHAT);
-        broadcast(MsgSender.NONE, winnerColor + ChatColor.BOLD + winnerName + " has won the round!", MsgType.CHAT);
-        broadcast(MsgSender.NONE, C.cWhite + readableWinReason,  MsgType.CHAT);
+        broadcastChat(MsgSender.NONE, "");
+        broadcastChat(MsgSender.NONE, winnerColor + "===================================");
+        broadcastChat(MsgSender.NONE, "");
+        broadcastChat(MsgSender.NONE, winnerColor + ChatColor.BOLD + winnerName + " has won the round!");
+        broadcastChat(MsgSender.NONE, C.cWhite + readableWinReason);
 
         if (mvp != null) {
             var mvpKills = roundKillStreak.getOrDefault(mvp, 0);
-            broadcast(MsgSender.NONE, C.cWhite + "MVP ✮ " + winnerColor + mvp.getName() + C.cWhite + ": " + mvpKills + " kills", MsgType.CHAT);
+            broadcastChat(MsgSender.NONE, C.cWhite + "MVP ✮ " + winnerColor + mvp.getName() + C.cWhite + ": " + mvpKills + " kills");
         }
 
-        broadcast(MsgSender.NONE, "", MsgType.CHAT);
-        broadcast(MsgSender.NONE, winnerColor + "===================================", MsgType.CHAT);
+        broadcastChat(MsgSender.NONE, "");
+        broadcastChat(MsgSender.NONE, winnerColor + "===================================");
 
         MsdmPlugin.highlight("========= Team " + winnerName + " won round " +  + roundInProgress + " by" +
                 reason + ". Score: " + scoreA + ":" + scoreB + " =========");
@@ -568,11 +565,11 @@ public abstract class TeamGame extends PausableGame
         looseStreak.put(getTeamA(), 1);
         looseStreak.put(getTeamB(), 1);
 
-        broadcast(MsgSender.NONE, "Swapping Sides", MsgType.SUBTITLE, 20, 60, 20);
+        broadcastSubtitle("Swapping Sides", 20, 60, 20);
     }
 
     @LocalEvent
-    private void handleGameWin(PreGameEndEvent e)
+    private void broadcastWinMessage(PreGameEndEvent e)
     {
         if (e.getWinner() == null) {
             return;
@@ -580,14 +577,14 @@ public abstract class TeamGame extends PausableGame
 
         var winnerColor = e.getWinner().getTeam().getColor();
 
-        broadcast(MsgSender.GAME, "==================================", MsgType.CHAT);
-        broadcast(MsgSender.GAME, "", MsgType.CHAT);
-        broadcast(MsgSender.GAME, winnerColor + C.Bold + e.getWinner().getNiceName() + " Won the game", MsgType.CHAT);
-        broadcast(MsgSender.GAME, "", MsgType.CHAT);
-        broadcast(MsgSender.GAME, "==================================", MsgType.CHAT);
+        broadcastChat(MsgSender.GAME, "==================================");
+        broadcastChat(MsgSender.GAME, "");
+        broadcastChat(MsgSender.GAME, winnerColor + C.Bold + e.getWinner().getNiceName() + " Won the game");
+        broadcastChat(MsgSender.GAME, "");
+        broadcastChat(MsgSender.GAME, "==================================");
 
         // also can do like stats or something here
-        broadcast(MsgSender.NONE, winnerColor + e.getWinner().getNiceName() + " Won the Game", MsgType.SUBTITLE, 20, 60, 20);
+        broadcastSubtitle(winnerColor + e.getWinner().getNiceName() + " Won the Game", 20, 60, 20);
     }
 
     @LocalEvent
@@ -605,13 +602,11 @@ public abstract class TeamGame extends PausableGame
     public Promise<?> changePlayerTeam(StrikePlayer player, StrikeTeam newTeam) {
         return new PlayerTeamChangeIntentEvent(this, player, newTeam).trigger()
         .thenAsync(
-            x -> {
-                return new PlayerRosterChangeEvent(
-                        this,
-                        player,
-                        newTeam
-                ).trigger();
-            }
+            x -> new PlayerRosterChangeEvent(
+                    this,
+                    player,
+                    newTeam
+            ).trigger()
         );
     }
 

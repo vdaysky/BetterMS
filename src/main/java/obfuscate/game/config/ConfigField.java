@@ -5,7 +5,7 @@ public enum ConfigField
     WARM_UP_DURATION("warmup-duration", 60),
     FREEZE_TIME_DURATION("freezetime-duration", 8),
     LIVE_DURATION("live-duration", 115),
-    ROUND_END_DURATION("roundend-duration", 8),
+    ROUND_END_DURATION("roundend-duration", 5),
     GAME_END_DURATION("gameend-duration", 30),
     BOMB_DURATION("bombplant-duration", 40),
     PAUSED_DURATION("paused-duration", -1),
@@ -153,6 +153,8 @@ public enum ConfigField
     ALLOW_ITEM_DROP("allow_item_drop", 1, "Whether to allow item drop"),
 
     BLOCK_B_SITE("block_b_site", 0, "Whether to allow bomb plant on A site only"),
+
+    GIVE_KILL_MONEY("give_kill_money", 1, "Whether to give money for kills"),
     ;
     final int default_value;
     final String field_name;

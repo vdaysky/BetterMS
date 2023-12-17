@@ -11,10 +11,10 @@ import obfuscate.game.player.StrikePlayer;
 import obfuscate.game.state.GeneralGameStage;
 import obfuscate.mechanic.item.StrikeItem;
 import obfuscate.message.MsgSender;
-import obfuscate.message.MsgType;
 import obfuscate.team.StrikeTeam;
 import obfuscate.util.UtilParticle;
 import obfuscate.util.chat.C;
+import obfuscate.util.chat.Message;
 import obfuscate.util.time.Task;
 import de.slikey.effectlib.util.ParticleEffect;
 import org.bukkit.*;
@@ -136,10 +136,9 @@ public class Bomb extends StrikeItem
             p.sendTitle(" ", C.cRed + C.Bold + "Bomb has been planted!", 0, 60, 10);
         }
 
-        game.broadcast(
+        game.broadcastChat(
                 MsgSender.GAME,
-                C.cRed + C.Bold + player.getName() + " has planted the bomb!",
-                MsgType.CHAT
+                Message.n().boldRed(player.getName() + " has planted the bomb!")
         );
 
         bombTimeTicks = game.getConfig().getDuration(GeneralGameStage.BOMB_PLANT) * 20;

@@ -1,7 +1,7 @@
 package obfuscate.game.player;
 
+import net.md_5.bungee.api.chat.BaseComponent;
 import obfuscate.MsdmPlugin;
-import obfuscate.account.FakeIdentity;
 import obfuscate.event.LocalEvent;
 import obfuscate.event.custom.network.PlayerDataReceivedEvent;
 import obfuscate.event.custom.player.*;
@@ -11,6 +11,7 @@ import obfuscate.game.core.*;
 import obfuscate.game.damage.NamedDamageSource;
 import obfuscate.game.debug.ViewRecorder;
 import obfuscate.game.sound.Radio;
+import obfuscate.gamemode.Competitive;
 import obfuscate.mechanic.item.StrikeStack;
 import obfuscate.mechanic.item.guns.StrikeItemType;
 import obfuscate.mechanic.item.guns.Gun;
@@ -19,7 +20,7 @@ import obfuscate.message.MsgSender;
 import obfuscate.podcrash.ACFeature;
 import obfuscate.podcrash.PodcrashIntegration;
 import obfuscate.ui.component.HotbarButton;
-import obfuscate.util.chat.MessageBuilder;
+import obfuscate.util.chat.Message;
 import obfuscate.util.serialize.ObjectId;
 import obfuscate.util.serialize.load.SyncableObject;
 import obfuscate.permission.Permission;
@@ -78,9 +79,25 @@ public class StrikePlayer extends OfflineStrikePlayer implements NamedDamageSour
 
     private long _lastRightClick = 0;
 
+    private HashMap<Object, HashSet<Permission>> temporaryPermissions = new HashMap<>();
+
+
     // this is required for automatically created offline players
     public StrikePlayer() {
 
+    }
+
+    public static @Nullable StrikePlayer findByName(String name) {
+        MsdmPlugin.highlight("Find player by name: " + name);
+        var bPlayer = Bukkit.getPlayer(name);
+
+        if (bPlayer == null) {
+            MsdmPlugin.highlight("Player not found");
+            return null;
+        }
+
+        MsdmPlugin.highlight("Player found: " + bPlayer);
+        return StrikePlayer.getOrCreate(bPlayer);
     }
 
     public void setLastRightClick(long time) {
@@ -106,23 +123,6 @@ public class StrikePlayer extends OfflineStrikePlayer implements NamedDamageSour
         return opBypass;
     }
 
-    public boolean isDisguised()
-    {
-        return disguised;
-    }
-
-    public void toggleDisguise()
-    {
-        disguised = !disguised;
-
-        if (!disguised)
-        {
-            //Bukkit.getScheduler().cancelTask(disguiseLoop);
-            cancelDisguise();
-            return;
-        }
-        runDisguise();
-    }
 
     private static final HashMap<UUID, StrikePlayer> strikePlayers = new HashMap<>();
 
@@ -238,6 +238,17 @@ public class StrikePlayer extends OfflineStrikePlayer implements NamedDamageSour
         }
 
         return getRole().hasPermission(perm);
+    }
+
+    public boolean hasPermissionIn(Permission perm, Object scope) {
+        if (hasPermission(perm)) {
+            return true;
+        }
+        Set<Permission> perms = temporaryPermissions.get(scope);
+        if (perms == null) {
+            return false;
+        }
+        return perms.contains(perm);
     }
 
     public String getFullChatName(@Nullable Game game)
@@ -356,7 +367,6 @@ public class StrikePlayer extends OfflineStrikePlayer implements NamedDamageSour
         MsdmPlugin.getInstance().updateHeaderFooter();
 
         // remove joined player from game tabs
-        this.setDisguise();
         this.loadResources();
 
         // Tab
@@ -364,6 +374,7 @@ public class StrikePlayer extends OfflineStrikePlayer implements NamedDamageSour
 
         // Lobby
         MsdmPlugin.getGameServer().getFallbackServer().join(this);
+        MsdmPlugin.sendGreetMessage(e.getPlayer());
     }
 
     /**
@@ -711,6 +722,7 @@ public class StrikePlayer extends OfflineStrikePlayer implements NamedDamageSour
         // check if we have player in model registry
         for (SyncableObject item : MsdmPlugin.getBackend().trackedModels.values()) {
             if (item instanceof StrikePlayer savedPlayer) {
+                // for bot players uuid is NULL causing problems
                 if (savedPlayer.getUuid().equals(player.getUniqueId())) {
                     // player was found in models storage, save to cache
                     strikePlayers.put(player.getUniqueId(), savedPlayer);
@@ -856,36 +868,6 @@ public class StrikePlayer extends OfflineStrikePlayer implements NamedDamageSour
         return newName;
     }
 
-    private void runDisguise()
-    {
-//        if (disguiseLoop!=null)
-//            return;
-
-        disguised = true;
-
-        FakeIdentity.ensureCache(getUuid());
-
-        //disguiseLoop = Bukkit.getScheduler().scheduleSyncRepeatingTask(MsdmPlugin.getInstance(), ()->
-        //{
-            FakeIdentity.setDisguise(
-                getPlayer(),
-                FakeIdentity.getRandomUUID(),
-                "Who am I?"
-                //genFunName(genFunName(genFunName(genFunName("You will never know"))))
-            );
-               // },
-                //0, 30);
-    }
-
-    private void cancelDisguise()
-    {
-        System.out.println("cancel disguise " + disguiseLoop);
-        //Bukkit.getScheduler().cancelTask(disguiseLoop);
-        //disguiseLoop = null;
-        disguised = false;
-        FakeIdentity.setDisguise(getPlayer(), getUuid(), getName());
-    }
-
     public void toggleDebug()
     {
         opBypass = !opBypass;
@@ -952,7 +934,7 @@ public class StrikePlayer extends OfflineStrikePlayer implements NamedDamageSour
     }
 
     /* guns */
-    public Gun getGunInHand(Game game)
+    public Gun getGunInHand(IGame game)
     {
         StrikeStack stack = game.getGameSession(this).getInventory().getStack(getHeldSlot());
 
@@ -1023,22 +1005,6 @@ public class StrikePlayer extends OfflineStrikePlayer implements NamedDamageSour
         onTeamLeave(game);
     }
 
-    public void stopDisguise()
-    {
-        if (isDisguised())
-            cancelDisguise();
-    }
-
-    public void setDisguise()
-    {
-        disguised = false;
-        if (disguised)
-        {
-            setVisibleName("???");
-            runDisguise();
-        }
-    }
-
     public String getActualName()
     {
         return _actualName;
@@ -1063,18 +1029,38 @@ public class StrikePlayer extends OfflineStrikePlayer implements NamedDamageSour
         }
         HotbarMessager.sendActionbar(getPlayer(), message);
     }
-    public void sendHotBar(MsgSender sender, String message)
+
+    public void sendMessage(TextComponent text)
     {
-        sendHotBar(sender.form(message));
+        if (getPlayer() == null) {
+            MsdmPlugin.warn("Failed to deliver message to offline player: " + text);
+            return;
+        }
+
+        getPlayer().spigot().sendMessage(text);
     }
 
-    public void sendMessage(String message)
-    {
+    public void sendMessage(String message) {
+        if (getPlayer() == null) {
+            MsdmPlugin.warn("Failed to deliver message to offline player: " + message);
+            return;
+        }
+
         getPlayer().sendMessage(message);
     }
 
-    public void sendMessage(MessageBuilder ... builder) {
-        getPlayer().spigot().sendMessage(Arrays.stream(builder).map(MessageBuilder::build).toArray(TextComponent[]::new));
+    public void sendMessage(Message... builder) {
+        getPlayer().spigot().sendMessage(Arrays.stream(builder).map(Message::build).toArray(TextComponent[]::new));
+    }
+
+    public void sendMessage(MsgSender sender, TextComponent message)
+    {
+        sendMessage(sender.form(message));
+    }
+
+    public void sendMessage(MsgSender sender, Message message)
+    {
+        sendMessage(sender.form(message.build()));
     }
 
     public void sendMessage(MsgSender sender, String message)
@@ -1278,5 +1264,28 @@ public class StrikePlayer extends OfflineStrikePlayer implements NamedDamageSour
 
     public boolean isBmsClientUsed() {
         return clientUsed;
+    }
+
+    public void addTemporaryPermission(Permission permission, Object scope) {
+        temporaryPermissions.putIfAbsent(scope, new HashSet<>());
+        temporaryPermissions.get(scope).add(permission);
+    }
+
+    public HashMap<Object, HashSet<Permission>> getTemporaryPermissions() {
+        return temporaryPermissions;
+    }
+
+    public void removeTemporaryPermission(Permission permission, Competitive game) {
+        if (!temporaryPermissions.containsKey(game)) {
+            return;
+        }
+        temporaryPermissions.get(game).remove(permission);
+    }
+
+    public void setLevel(int i) {
+        if (getPlayer() == null) {
+            return;
+        }
+        getPlayer().setLevel(i);
     }
 }

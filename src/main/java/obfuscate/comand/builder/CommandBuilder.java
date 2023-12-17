@@ -1,5 +1,6 @@
 package obfuscate.comand.builder;
 
+import obfuscate.comand.CmdContext;
 import obfuscate.comand.ExecutionContext;
 import obfuscate.comand.argument.CommandArgument;
 import obfuscate.comand.argument.OptionalArgs;
@@ -10,6 +11,7 @@ import obfuscate.permission.Permission;
 import java.security.InvalidParameterException;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 public class CommandBuilder {
@@ -26,7 +28,11 @@ public class CommandBuilder {
 
     private boolean implemented = true;
 
+    private int throttleSeconds = 0;
+
     private Function<ExecutionContext, String> condition = x -> null;
+
+    private CmdContext context = null;
 
     public CommandBuilder permission(Permission perm) {
         this.perm = perm;
@@ -40,6 +46,12 @@ public class CommandBuilder {
 
     public CommandBuilder notImplemented() {
         implemented = false;
+        return this;
+    }
+
+    /** Makes a promise that this command builder and it's children only affect things in certain context */
+    public CommandBuilder context(CmdContext context) {
+        this.context = context;
         return this;
     }
 
@@ -101,7 +113,9 @@ public class CommandBuilder {
                 childCommands,
                 completer,
                 implemented,
-                Objects.requireNonNullElseGet(condition, () -> exec::wouldFail)
+                Objects.requireNonNullElseGet(condition, () -> exec::wouldFail),
+                this.context,
+                this.throttleSeconds
         );
 
         handler.setParent(parent);
@@ -126,4 +140,8 @@ public class CommandBuilder {
         return null;
     }
 
+    public CommandBuilder throttle(int i, TimeUnit timeUnit) {
+        throttleSeconds = (int) timeUnit.toSeconds(i);
+        return this;
+    }
 }

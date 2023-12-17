@@ -41,7 +41,7 @@ public class JoinCommand implements CommandExecutor {
             return true;
         }
 
-        game.tryJoinPlayerWithMessages(ctx.getSender().getPlayer(), spec, team);
+        game.tryJoinPlayer(ctx.getSender().getPlayer(), spec, team);
         return true;
     }
 }

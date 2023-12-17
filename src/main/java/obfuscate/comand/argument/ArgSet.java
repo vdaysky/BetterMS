@@ -1,5 +1,6 @@
 package obfuscate.comand.argument;
 
+import obfuscate.MsdmPlugin;
 import obfuscate.comand.exception.CommandArgParseException;
 
 import javax.annotation.Nullable;
@@ -11,6 +12,8 @@ public class ArgSet implements Iterable<ParsedArgument<?>> {
     HashMap<String, ParsedArgument<?>> arguments = new HashMap<>();
     ArrayList<String> orderOfInsertion = new ArrayList<>();
 
+    ArrayList<ArgSet> savepoints = new ArrayList<>();
+
     /** Add value to argument set. Parses string into argument.
      *
      * @param argument Argument declaration
@@ -19,13 +22,13 @@ public class ArgSet implements Iterable<ParsedArgument<?>> {
      * @param isInvalid Whether this argument is invalid. If true, parsed value will be null
      * */
     public <T> void add(CommandArgument<T> argument, String value, boolean isPositional, boolean isInvalid) throws CommandArgParseException {
-        T val = null;
+        T parsedValue = null;
 
         if (!isInvalid) {
-            val = argument.parse(value);
+            parsedValue = argument.parse(value);
         }
 
-        var arg = new ParsedArgument<>(value, argument, isPositional, isInvalid, val);
+        var arg = new ParsedArgument<>(value, argument, isPositional, isInvalid, parsedValue);
         arguments.put(argument.getName(), arg);
         orderOfInsertion.add(argument.getName());
     }
@@ -115,5 +118,31 @@ public class ArgSet implements Iterable<ParsedArgument<?>> {
     @Override
     public Iterator<ParsedArgument<?>> iterator() {
         return values();
+    }
+
+    public ArgSet copy() {
+        var copy = new ArgSet();
+        copy.arguments = new HashMap<>();
+        copy.orderOfInsertion = new ArrayList<>();
+
+        for (String key : arguments.keySet()) {
+            var arg = arguments.get(key);
+            copy.arguments.put(key, arg.copy());
+        }
+        copy.orderOfInsertion.addAll(orderOfInsertion);
+        return copy;
+    }
+
+    public void savepoint() {
+        savepoints.add(copy());
+    }
+
+    public void rollback() {
+        if (savepoints.isEmpty()) {
+            throw new IllegalStateException("No savepoints to rollback to");
+        }
+        var argset = savepoints.remove(savepoints.size() - 1);
+        this.arguments = argset.arguments;
+        this.orderOfInsertion = argset.orderOfInsertion;
     }
 }

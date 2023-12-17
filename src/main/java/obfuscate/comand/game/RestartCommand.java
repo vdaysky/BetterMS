@@ -3,7 +3,6 @@ package obfuscate.comand.game;
 import obfuscate.comand.ExecutionContext;
 import obfuscate.comand.builder.CommandExecutor;
 import obfuscate.message.MsgSender;
-import obfuscate.message.MsgType;
 import obfuscate.util.time.Task;
 
 public class RestartCommand implements CommandExecutor {
@@ -16,7 +15,7 @@ public class RestartCommand implements CommandExecutor {
         if (arg_delay != null)
             delay = arg_delay;
 
-        ctx.getSender().getPlayer().getGame().broadcast(MsgSender.GAME, "Game will be restarted in " + delay + " seconds!", MsgType.CHAT);
+        ctx.getSender().getPlayer().getGame().broadcastChat(MsgSender.GAME, "Game will be restarted in " + delay + " seconds!");
         new Task(ctx.getSender().getPlayer().getGame()::restart, delay * 20).run();
         return false;
     }

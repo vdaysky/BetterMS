@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 
 public class GameInventory implements Iterable<StrikeStack>
 {
@@ -227,5 +228,12 @@ public class GameInventory implements Iterable<StrikeStack>
         for (StrikeStack stack : hotbar) {
             stack.refreshSlotDisplay();
         }
+    }
+
+    public List<Gun> getGuns() {
+        return Arrays.stream(hotbar)
+                .filter(x -> !x.isEmpty() && x.top() instanceof Gun)
+                .map(x -> (Gun) x.top())
+                .toList();
     }
 }

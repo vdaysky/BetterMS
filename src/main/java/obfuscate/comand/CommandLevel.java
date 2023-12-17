@@ -27,7 +27,7 @@ public class CommandLevel {
      * Some of them may be taken by current level, some may be passed to the next one
      * */
     private final List<String> leftArgs;
-
+    private CommandLevel parent;
 
     public CommandLevel(CommandHandler handler, ArgSet required, ArgSet optional, CommandLevel child, String label, List<String> leftArgs) {
         this.handler = handler;
@@ -36,6 +36,17 @@ public class CommandLevel {
         this.child = child;
         this.leftArgs = leftArgs;
         this.label = label;
+        if (child != null) {
+            child.setParent(this);
+        }
+    }
+
+    private void setParent(CommandLevel parent) {
+        this.parent = parent;
+    }
+
+    public CommandLevel getParent() {
+        return parent;
     }
 
     public String getLabel() {
@@ -125,5 +136,19 @@ public class CommandLevel {
             }
         }
         return null;
+    }
+
+    public void getFullCommandLabel(StringBuilder builder) {
+        if (parent != null) {
+            parent.getFullCommandLabel(builder);
+            builder.append(".");
+        }
+        builder.append(label);
+    }
+
+    public String getFullCommandLabel() {
+        var builder = new StringBuilder();
+        getFullCommandLabel(builder);
+        return builder.toString();
     }
 }

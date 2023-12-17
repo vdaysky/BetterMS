@@ -9,6 +9,7 @@ import obfuscate.event.custom.item.ItemFocusEvent;
 import obfuscate.event.custom.item.ItemLostFocusEvent;
 import obfuscate.game.config.ConfigField;
 import obfuscate.game.core.Game;
+import obfuscate.game.core.IGame;
 import obfuscate.game.debug.BulletLog;
 import obfuscate.game.player.StrikePlayer;
 import obfuscate.mechanic.item.StrikeItem;
@@ -461,7 +462,7 @@ public class Gun extends StrikeItem
 		return cone;
 	}
 
-	public void cancelReload(Game game, StrikePlayer holder, ReloadEndEvent.ReloadEndReason reason)
+	public void cancelReload(IGame game, StrikePlayer holder, ReloadEndEvent.ReloadEndReason reason)
 	{
 		if (!reloading)
 			return;
@@ -594,9 +595,6 @@ public class Gun extends StrikeItem
 			{
 				case DROP:
 					cancelReload(e.getGame(), e.getHolder(), ReloadEndEvent.ReloadEndReason.DROP);
-					break;
-				case DEATH:
-					cancelReload(e.getGame(), e.getHolder(), ReloadEndEvent.ReloadEndReason.DEATH);
 					break;
 				case SWITCH:
 					cancelReload(e.getGame(), e.getHolder(), ReloadEndEvent.ReloadEndReason.SWITCH);

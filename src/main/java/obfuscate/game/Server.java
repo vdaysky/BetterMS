@@ -1,10 +1,12 @@
 package obfuscate.game;
 
+import obfuscate.Lobby;
 import obfuscate.MsdmPlugin;
 import obfuscate.event.CustomListener;
 import obfuscate.event.LocalEvent;
 import obfuscate.event.LocalPriority;
 import obfuscate.event.custom.game.GameDestroyEvent;
+import obfuscate.event.custom.intent.CreateGameIntentEvent;
 import obfuscate.event.custom.intent.GameDeleteIntentEvent;
 import obfuscate.event.custom.lobby.PlayerJoinHubEvent;
 import obfuscate.event.custom.network.ModelEvent;
@@ -13,9 +15,11 @@ import obfuscate.event.custom.player.PlayerLeaveGameEvent;
 import obfuscate.event.custom.player.PlayerLeaveServerEvent;
 import obfuscate.event.custom.time.TimeEvent;
 import obfuscate.game.core.Game;
+import obfuscate.game.core.IGame;
 import obfuscate.game.player.StrikePlayer;
 import obfuscate.game.registry.OnlinePlayerDataRegistry;
 import obfuscate.gamemode.Competitive;
+import obfuscate.gamemode.registry.GameMode;
 import obfuscate.hub.Hub;
 import obfuscate.network.BackendManager;
 import obfuscate.network.models.responses.IntentResponse;
@@ -26,6 +30,9 @@ import obfuscate.util.serialize.load.Model;
 import obfuscate.network.event.ModelUpdateEvent;
 import obfuscate.util.Promise;
 import obfuscate.util.UtilPlayer;
+import obfuscate.util.time.Task;
+import obfuscate.world.GameMap;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,6 +46,9 @@ public class Server extends SyncableObject implements CustomListener
     private List<Competitive> games;
 
     private List<Hub> hubs = new ArrayList<>();
+    private HashMap<StrikePlayer, IGame> ownedGames = new HashMap<>();
+
+    private HashMap<IGame, Task> gameDestructionDelayedTasks = new HashMap<>();
 
     public Server() {
     }
@@ -58,8 +68,8 @@ public class Server extends SyncableObject implements CustomListener
 
     public void printState() {
         MsdmPlugin.logger().info("============= Games =================");
-        for (StrikePlayer player : playerGames.keySet()){
-            MsdmPlugin.logger().info("- " + player.getName() + " in " + playerGames.get(player));
+        for (StrikePlayer player : playerLobbies.keySet()){
+            MsdmPlugin.logger().info("- " + player.getName() + " in " + playerLobbies.get(player));
         }
 
         for (Game game: games){
@@ -84,7 +94,7 @@ public class Server extends SyncableObject implements CustomListener
         return games;
     }
 
-    private final HashMap<StrikePlayer, Game> playerGames = new HashMap<>();
+    private final HashMap<StrikePlayer, Lobby> playerLobbies = new HashMap<>();
     private final OnlinePlayerDataRegistry onlinePlayerDataRegistry = new OnlinePlayerDataRegistry();
 
     @LocalEvent
@@ -92,12 +102,12 @@ public class Server extends SyncableObject implements CustomListener
 //        MsdmPlugin.highlight("ModelUpdateEvent: " + e.getUpdatedObjectId());
 
         if (e.getType().equals("Delete")) {
-            MsdmPlugin.info("ModelUpdateEvent: Received delete event for " + e.getUpdatedObjectId());
+            MsdmPlugin.info("ModelUpdateEvent: Received delete event for " + e.getObjectId());
             return Promise.Instant();
         }
 
         BackendManager Backend = MsdmPlugin.getBackend();
-        SyncableObject obj = Backend.getById(e.getUpdatedObjectId());
+        SyncableObject obj = Backend.getById(e.getObjectId());
 
         var affectedObjects = Backend.getDependants(e.getObjectId());
 
@@ -110,7 +120,7 @@ public class Server extends SyncableObject implements CustomListener
 
         // we received update event for model we do not track
         if (obj == null) {
-            MsdmPlugin.warn("Received update for model we do not track: " + e.getUpdatedObjectId());
+            MsdmPlugin.warn("Received update for model we do not track: " + e.getObjectId());
             return null;
         }
 
@@ -146,7 +156,14 @@ public class Server extends SyncableObject implements CustomListener
 
     public Game getGame(StrikePlayer player)
     {
-        return playerGames.get(player);
+        if (playerLobbies.get(player) instanceof Game game) {
+            return game;
+        }
+        return null;
+    }
+
+    public Lobby getLobby(StrikePlayer player) {
+        return playerLobbies.get(player);
     }
 
     public Competitive getGame(int id) {
@@ -178,22 +195,73 @@ public class Server extends SyncableObject implements CustomListener
         }
     }
 
+    private void setPlayerLobby(StrikePlayer player, Lobby lobby) {
+        playerLobbies.put(player, lobby);
+        player.clearBukkitInventory();
+        player.setLevel(0);
+        lobby.setupInventory(player);
+    }
+
     @LocalEvent(cascade = true, priority = LocalPriority.POST) // cascade so we handle both join and reconnect
     private void onPlayerJoin(PlayerJoinGameEvent e)
     {
-        playerGames.put(e.getPlayer(), e.getGame());
+        setPlayerLobby(e.getPlayer(), e.getGame());
         UtilPlayer.hideAllExceptSameLobby(e.getPlayer());
+
+        if (gameDestructionDelayedTasks.containsKey(e.getGame())) {
+            gameDestructionDelayedTasks.get(e.getGame()).cancel();
+        }
     }
 
-    @LocalEvent(priority = LocalPriority.POST)
-    private void onPlayerJoinHub(PlayerJoinHubEvent e) {
-        UtilPlayer.hideAllExceptSameLobby(e.getPlayer());
+    @LocalEvent(cascade = true, priority = LocalPriority.POST)
+    private void onPlayerLeaveGame(PlayerLeaveGameEvent e) {
+        if (e.getGame().getOnlinePlayers().isEmpty()) {
+            rescheduleGameDestruction(e.getGame());
+        }
     }
 
     @LocalEvent
-    private void onPlayerLeave(PlayerLeaveGameEvent e)
-    {
-        playerGames.remove(e.getPlayer());
+    private void onGameDestroyed(GameDestroyEvent e) {
+        // some cleanup
+        gameDestructionDelayedTasks.remove(e.getGame());
+    }
+
+    private void rescheduleGameDestruction(IGame game) {
+        if (gameDestructionDelayedTasks.containsKey(game)) {
+            gameDestructionDelayedTasks.put(
+                    game,
+                    new Task(() -> deleteGame(game), 20 * 60 * 5).run()
+            );
+        }
+    }
+
+    public Promise<@Nullable Game> createGame(GameMap map, GameMode mode, boolean selfDestructs) {
+        return new CreateGameIntentEvent(
+                map.getName(),
+                mode.name(),
+                null
+        ).trigger().thenSync(
+            response -> {
+                if (response.isSuccess()) {
+                    Long gameId = (Long) response.getPayload().get("game_id");
+                    var game = getGame(gameId.intValue());
+
+                    if (selfDestructs) {
+                        gameDestructionDelayedTasks.put(game, null);
+                        rescheduleGameDestruction(game);
+                    }
+
+                    return game;
+                }
+                return null;
+            }
+        );
+    }
+
+
+    @LocalEvent(priority = LocalPriority.POST)
+    private void onPlayerJoinHub(PlayerJoinHubEvent e) {
+        setPlayerLobby(e.getPlayer(), e.getHub());
         UtilPlayer.hideAllExceptSameLobby(e.getPlayer());
     }
 
@@ -214,7 +282,32 @@ public class Server extends SyncableObject implements CustomListener
         hubs.add(new Hub());
     }
 
-    public Promise<? extends IntentResponse> deleteGame(Competitive game) {
+    public Promise<? extends IntentResponse> deleteGame(IGame game) {
         return new GameDeleteIntentEvent(game).trigger();
+    }
+
+    public void registerOwnedGame(StrikePlayer player, Game game) {
+        if (ownedGames.containsKey(player)) {
+            IGame oldOwnedGame = ownedGames.get(player);
+            deleteGame(oldOwnedGame);
+        }
+        ownedGames.put(player, game);
+    }
+
+    public @Nullable IGame getOwnedGame(StrikePlayer owner) {
+        return ownedGames.get(owner);
+    }
+
+    public void shutdown() {
+        // leave all players from all games
+        for (var game : games) {
+            for (var player : game.getOnlinePlayers()) {
+                game.tryLeavePlayer(player);
+            }
+        }
+        // delete all mps
+        for (var game : ownedGames.values()) {
+            deleteGame(game);
+        }
     }
 }

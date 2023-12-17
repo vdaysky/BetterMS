@@ -1,6 +1,7 @@
 package obfuscate.comand.builder;
 
 import obfuscate.MsdmPlugin;
+import obfuscate.comand.CmdContext;
 import obfuscate.comand.DummyExecutor;
 import obfuscate.comand.ExecutionContext;
 import obfuscate.comand.argument.OptionalArgs;
@@ -28,6 +29,10 @@ public class CommandHandler {
     private final boolean implemented;
     private final boolean hasExecutor;
 
+    private final int throttleSeconds;
+
+    private final CmdContext commandContext;
+
     public CommandHandler(
             CommandExecutor exec,
             Permission perm,
@@ -38,11 +43,15 @@ public class CommandHandler {
             HashMap<String, CommandHandler> children,
             CommandAutocomplete completer,
             boolean implemented,
-            Function<ExecutionContext, String> condition
+            Function<ExecutionContext, String> condition,
+            CmdContext commandContext,
+            int throttleSeconds
     ) {
         this.req_args = req_args;
         this.opt_args = opt_args;
         this.perm = perm;
+        this.commandContext = commandContext;
+        this.throttleSeconds = throttleSeconds;
 
         hasExecutor = exec != null;
 
@@ -69,6 +78,10 @@ public class CommandHandler {
         return hasExecutor;
     }
 
+    public CmdContext getCommandContext() {
+        return commandContext;
+    }
+
     public void setParent(CommandBuilder parent) {
         this.parent = parent;
     }
@@ -78,6 +91,10 @@ public class CommandHandler {
             return completer;
 
         return new DefaultAutocomplete();
+    }
+
+    public int getThrottleSeconds() {
+        return throttleSeconds;
     }
 
     public CommandHandler getChildCommand(String arg) {

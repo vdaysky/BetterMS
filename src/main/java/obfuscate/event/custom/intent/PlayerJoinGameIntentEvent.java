@@ -3,6 +3,7 @@ package obfuscate.event.custom.intent;
 import obfuscate.event.Tracked;
 import obfuscate.event.custom.IntentEvent;
 import obfuscate.game.core.Game;
+import obfuscate.game.core.IGame;
 import obfuscate.game.player.StrikePlayer;
 import obfuscate.team.StrikeTeam;
 import obfuscate.util.serialize.dump.Serializable;
@@ -13,7 +14,7 @@ import javax.annotation.Nullable;
 public class PlayerJoinGameIntentEvent extends IntentEvent {
 
     @Serializable
-    private final Game game;
+    private final IGame game;
 
     @Serializable
     private final StrikePlayer player;
@@ -24,7 +25,7 @@ public class PlayerJoinGameIntentEvent extends IntentEvent {
     @Serializable
     private final boolean spectate;
 
-    public PlayerJoinGameIntentEvent(Game game, @Nullable StrikeTeam team, StrikePlayer player, boolean spec) {
+    public PlayerJoinGameIntentEvent(IGame game, @Nullable StrikeTeam team, StrikePlayer player, boolean spec) {
         this.game = game;
         this.player = player;
         this.team = team;
@@ -35,7 +36,7 @@ public class PlayerJoinGameIntentEvent extends IntentEvent {
         return spectate;
     }
 
-    public Game getGame() {
+    public IGame getGame() {
         return game;
     }
 
