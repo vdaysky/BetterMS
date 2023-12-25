@@ -126,4 +126,8 @@ public class Message {
     public Message boldRed(String s) {
         return boldColor(ChatColor.RED, TextComponent.fromLegacyText(s));
     }
+
+    public Message red(String s) {
+        return color(s, ChatColor.RED);
+    }
 }

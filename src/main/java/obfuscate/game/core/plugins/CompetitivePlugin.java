@@ -35,6 +35,12 @@ public class CompetitivePlugin implements IPlugin<Competitive> {
                 ConfigField.CREATE_NEW_ON_COMPLETION,
                 0
         );
+
+        config.setValue(
+                instance,
+                ConfigField.REQUIRE_CLIENT,
+                1
+        );
     }
 }
 

@@ -5,6 +5,7 @@ import obfuscate.game.player.StrikePlayer;
 import obfuscate.gamemode.Competitive;
 import obfuscate.gamemode.registry.GameMode;
 import obfuscate.message.MsgSender;
+import obfuscate.util.Promise;
 import obfuscate.util.chat.C;
 import obfuscate.util.time.Task;
 import org.bukkit.Bukkit;
@@ -61,9 +62,16 @@ public class ServerList {
         }
 
         player.sendMessage(MsgSender.SERVER, C.cGray + "Connecting you to the game...");
+
+
+        Promise<?> fut = game.tryJoinPlayer(player, isRightClick);
+
+        if (fut == null) {
+            return;
+        }
         inConnectProgress.add(player);
 
-        game.tryJoinPlayer(player, isRightClick).thenSync((x) -> {
+        fut.thenSync((x) -> {
             inConnectProgress.remove(player);
             return x;
         });

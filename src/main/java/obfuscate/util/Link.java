@@ -6,4 +6,8 @@ public class Link {
         return "http://us.betterms.odays.ky/game/" + id;
     }
 
+    public static String post(Integer number) {
+        return "http://us.betterms.odays.ky/post/" + number;
+
+    }
 }

@@ -155,6 +155,8 @@ public enum ConfigField
     BLOCK_B_SITE("block_b_site", 0, "Whether to allow bomb plant on A site only"),
 
     GIVE_KILL_MONEY("give_kill_money", 1, "Whether to give money for kills"),
+
+    REQUIRE_CLIENT("require_client", 0, "Whether to require bms-client to be installed"),
     ;
     final int default_value;
     final String field_name;

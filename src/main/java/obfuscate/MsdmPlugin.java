@@ -11,6 +11,7 @@ import obfuscate.game.Server;
 import obfuscate.game.core.Game;
 import obfuscate.game.debug.ViewRecorder;
 import obfuscate.game.player.StrikePlayer;
+import obfuscate.logging.Tag;
 import obfuscate.network.BackendEventManager;
 import obfuscate.network.BackendManager;
 import obfuscate.podcrash.BMSChannel;
@@ -54,8 +55,12 @@ public class MsdmPlugin extends JavaPlugin implements Listener
 
     private static TelegramBot bot;
 
+
+
+
     public MsdmPlugin()
     {
+        obfuscate.logging.Logger.info("MsdmPlugin Is Created", Tag.SERVER_LIFECYCLE);
         instance = this;
         PluginManager.collectPluginClasses();
         BackendEventManager.collectEventClasses();
@@ -99,7 +104,7 @@ public class MsdmPlugin extends JavaPlugin implements Listener
 
 
     private void serverOperational() {
-        MsdmPlugin.logger().info("Server Is Loaded");
+        obfuscate.logging.Logger.info("Server Is Loaded", Tag.SERVER_LIFECYCLE);
 
         for (Team t : Bukkit.getScoreboardManager().getMainScoreboard().getTeams()) {
             MsdmPlugin.info("Unregister scoreboard team " + t.getName());

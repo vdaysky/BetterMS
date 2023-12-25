@@ -236,9 +236,12 @@ public class Competitive extends DefusalGame
                     loc = getBombCarry().getLocation();
                 } else if (isDropped) {
                     loc = findDroppedItem(getBomb()).getLocation();
-                } else {
+                } else if (player.isOnline()) {
                     // this can happen in games with no bomb
                     loc = player.getLocation(); // just to avoid null pointer exception
+                } else {
+                    // should never happen
+                    return C.cRed + C.Bold + "Compass is broken";
                 }
 
                 player.setCompassTarget(loc);

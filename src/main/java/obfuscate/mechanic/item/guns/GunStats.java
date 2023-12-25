@@ -427,7 +427,7 @@ public enum GunStats implements ItemStats
 			10, 3, 								//Clip Size, Spare Ammo
 			1500, 3600, 							//ROF, Reload Time
 			115, 0, 0.97, 			//Damage, Dropoff, Armor Penetration
-			0.09, 0.09,//0.2, 0.2,					//COF Min, COF Max
+			0.1, 1,//0.2, 0.2,					//COF Min, COF Max
 			0, 												//COF Inc per Bullet
 			Material.GOLDEN_SHOVEL, Sound.ENTITY_GENERIC_DRINK, true, 1,
 			new ArrayList<>(
@@ -446,7 +446,7 @@ public enum GunStats implements ItemStats
 			10, 6, 								//Clip Size, Spare Ammo
 			1250, 3700, 							//ROF, Reload Time
 			88, 0.001, 0.85, 		//Damage, Dropoff, Armor Penetration
-			0.065, 0.065,							//COF Min, COF Max
+			0.09, 0.09,							//COF Min, COF Max
 			0, 												//COF Inc per Bullet
 			Material.DIAMOND_PICKAXE, Sound.ENTITY_WOLF_DEATH, true, 1,
 			new ArrayList<>(

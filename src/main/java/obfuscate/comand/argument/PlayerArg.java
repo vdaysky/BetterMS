@@ -17,9 +17,7 @@ public class PlayerArg extends AbstractArg<StrikePlayer> {
 
     @Override
     public StrikePlayer parse(String argument) throws CommandArgParseException {
-        MsdmPlugin.highlight("PlayerArg.parse: " + argument);
         var player = StrikePlayer.findByName(argument);
-        MsdmPlugin.highlight("parsed: " + player);
         if (player == null) {
             throw new CommandArgParseException();
         }

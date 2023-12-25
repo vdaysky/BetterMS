@@ -258,6 +258,18 @@ public abstract class Game extends GameData implements IGame {
 
         player.sendMessage(MsgSender.SERVER, C.cGray + "Connecting to game#" + getId().getObjId() + "...");
 
+        if (getConfig().getValue(ConfigField.REQUIRE_CLIENT).bool()) {
+            if (!player.isBmsClientUsed()) {
+                // http://files.us.betterms.odays.ky/bms_client-1.0.jar
+                player.sendMessage(
+                    Message.n().red("You must use BMS client to join this game! Read more ").append(
+                        Message.n().green("<HERE>").link(Link.post(1)).hover("Click here to read more")
+                    )
+                );
+                return null;
+            }
+        }
+
         // whitelist and server capacity check
         if (!canJoin(player, spec)) {
             player.sendMessage(MsgSender.SERVER, ChatColor.RED + "You are not allowed to join this server!");
@@ -2163,6 +2175,12 @@ public abstract class Game extends GameData implements IGame {
         if (getConfig().getValue(ConfigField.WHITELIST).bool() && !getWhitelist().contains(player))
             return false;
 
+        if (getConfig().getValue(ConfigField.REQUIRE_CLIENT).bool()) {
+            if (!player.isBmsClientUsed()) {
+                return false;
+            }
+        }
+
         return spectator || getMaxPlayers() > getOnlineDeadOrAliveParticipants().size();
     }
 
@@ -2184,7 +2202,7 @@ public abstract class Game extends GameData implements IGame {
         List<StrikePlayer> result = new ArrayList<>();
 
         for (StrikePlayer p : group) {
-            if (getGameSession(p).isAlive()) {
+            if (getGameSession(p) != null && getGameSession(p).isAlive()) {
                 result.add( p );
             }
         }

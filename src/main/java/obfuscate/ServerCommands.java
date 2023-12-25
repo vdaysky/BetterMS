@@ -1216,6 +1216,9 @@ public class ServerCommands {
                             ctx.getSender().sendMessage(MsgSender.NONE, C.cWhite + "- Added hub void teleport");
                             ctx.getSender().sendMessage(MsgSender.NONE, C.cWhite + "- Added mps command");
                             ctx.getSender().sendMessage(MsgSender.NONE, C.cWhite + "- Shotgun balance changes");
+                            ctx.getSender().sendMessage(MsgSender.NONE, C.cAqua + C.Bold + "v0.1.13 - 24dec 23");
+                            ctx.getSender().sendMessage(MsgSender.NONE, C.cWhite + "- Reduced sniper noscope accuracy");
+                            ctx.getSender().sendMessage(MsgSender.NONE, C.cWhite + "- Added option for client requirement");
                             return true;
                         })
                         .build(),
