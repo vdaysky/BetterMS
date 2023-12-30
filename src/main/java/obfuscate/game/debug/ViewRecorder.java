@@ -2,6 +2,7 @@ package obfuscate.game.debug;
 
 import obfuscate.MsdmPlugin;
 import obfuscate.game.player.StrikePlayer;
+import obfuscate.logging.Logger;
 import obfuscate.util.time.Task;
 import org.bukkit.util.Vector;
 
@@ -60,7 +61,7 @@ public class ViewRecorder {
             task = new Task(this::recordViews, 1, 1).run();
             return;
         }
-        MsdmPlugin.logger().warning("ViewRecorder is already running!");
+        Logger.warning("ViewRecorder is already running!");
     }
 
     public static ViewRecorder getInstance() {
@@ -143,8 +144,7 @@ public class ViewRecorder {
                         }
                         out.println("");
                     } catch (IOException e) {
-                        e.printStackTrace();
-                        MsdmPlugin.logger().severe("Error while saving view history");
+                        Logger.severe("Error while saving view history", e);
                     }
                 }
             }, i).run();

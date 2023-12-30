@@ -14,7 +14,6 @@ public class ViewPlayer {
     public static Promise<?> playSingleView(String viewName, StrikePlayer player, ArrayList<Vector> vs) {
         Promise<?> promise = new Promise<>();
         player.sendMessage("Start of view " + viewName);
-        MsdmPlugin.logger().info("Start of view");
         int i = 0;
         for (Vector v : vs) {
             final int finalI = i;
@@ -30,7 +29,6 @@ public class ViewPlayer {
                 // set player look direction
                 p.teleport(p.getLocation().setDirection(v));
                 if (finalI + 1 == vs.size()) {
-                    MsdmPlugin.logger().info("View ended");
                     player.sendMessage("End of view");
                     promise.fulfill(null);
                 }
@@ -52,10 +50,8 @@ public class ViewPlayer {
 
             if (promise == null) {
                 promise = playSingleView("#" + fVIdx, player, shot);
-                MsdmPlugin.info("First promise in chain is " + promise);
             } else {
                 promise = promise.thenAsync((x) -> playSingleView("#" + fVIdx, player, shot));
-                MsdmPlugin.info("Next promise in chain is " + promise);
             }
 
             vIdx += 1;

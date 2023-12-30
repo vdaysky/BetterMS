@@ -14,6 +14,8 @@ import obfuscate.game.damage.NamedDamageSource;
 import obfuscate.game.debug.ViewRecorder;
 import obfuscate.game.player.StrikePlayer;
 import obfuscate.game.state.StateTag;
+import obfuscate.logging.Logger;
+import obfuscate.logging.Tag;
 import obfuscate.mechanic.item.StrikeItem;
 import obfuscate.mechanic.item.StrikeStack;
 import obfuscate.mechanic.item.objective.Bomb;
@@ -66,7 +68,6 @@ public class EventManager implements Listener
     public static EventManager construct()
     {
         if (instance == null) {
-            MsdmPlugin.logger().warning("EventManager instance is constructed");
             instance = new EventManager();
         }
 
@@ -770,11 +771,11 @@ public class EventManager implements Listener
                 }
                 hubPlayer.sendMessage(Message.of("").green("[").gray("Hub").green("] ").gray(e.getPlayer().getName() + " >> ").white(message));
             }
-            MsdmPlugin.info("[Hub] " + e.getPlayer().getName() + " > " + message);
+            Logger.info("[Hub] " + e.getPlayer().getName() + " > " + message, player, Tag.CHAT);
             return;
         }
         //String message = player.getFullChatName(game) + ChatColor.GRAY + " >> " + player.getRole().getChatMessageColor() + e.getMessage();
         new PlayerChatEvent(game, player, message).trigger();
-        MsdmPlugin.info("[Game#" + game.getId() + "] " + e.getPlayer().getName() + " > " + message);
+        Logger.info("[Game#" + game.getId() + "] " + e.getPlayer().getName() + " > " + message, player, Tag.CHAT, game);
     }
 }

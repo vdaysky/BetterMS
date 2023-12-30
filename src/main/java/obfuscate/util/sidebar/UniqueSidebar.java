@@ -15,7 +15,6 @@ public class UniqueSidebar
     {
         UUID key = player.getUuid();
         if (!sidebarReg.hasEntry(key)) {
-            MsdmPlugin.logger().info("Created sidebar for " + player.getName());
             Sidebar s = new Sidebar(player);
             sidebarReg.addEntry(key, s);
             s.create();
@@ -27,7 +26,6 @@ public class UniqueSidebar
         UUID key = player.getUuid();
 
         if (sidebarReg.hasEntry(key)) {
-            MsdmPlugin.logger().info("Removing sidebar for " + player.getName());
             sidebarReg.removeEntry(key).destroy();
         }
     }

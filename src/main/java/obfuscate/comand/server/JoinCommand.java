@@ -20,9 +20,7 @@ public class JoinCommand implements CommandExecutor {
         StrikeTeam team = null;
 
         if (teamName != null) {
-            MsdmPlugin.highlight("teamName: '" + teamName + "'");
             team = StrikeTeam.valueOf(teamName);
-            MsdmPlugin.highlight("team: " + team);
         }
 
         if(spec == null) {

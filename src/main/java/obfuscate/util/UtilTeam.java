@@ -28,7 +28,6 @@ public class UtilTeam
         if (!removeFor.isOnline())
             return;
 
-        MsdmPlugin.highlight("Hide from each other " + player + " " + removeFor);
         removeFor.getPlayer().hidePlayer(player.getPlayer());
         player.getPlayer().hidePlayer(removeFor.getPlayer());
 //        PacketPlayOutPlayerInfo packet = new PacketPlayOutPlayerInfo(PacketPlayOutPlayerInfo.EnumPlayerInfoAction.REMOVE_PLAYER, player.getCraftPlayer());

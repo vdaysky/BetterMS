@@ -32,7 +32,6 @@ public class TargetPracticePlugin implements IPlugin<Competitive> {
     @Override
     public void preInit(Competitive instance) {
         this.instance = instance;
-        MsdmPlugin.highlight("TargetPracticePlugin preInit instanceid: " + instance.getId().getObjId());
         instance.getConfig().setValue(instance, ConfigField.BUY_ANYWHERE, 1);
         instance.getConfig().setValue(instance, ConfigField.BUY_TIME, -1);
         instance.getConfig().setValue(instance, ConfigField.FREE_GUNS, 1);
@@ -83,7 +82,6 @@ public class TargetPracticePlugin implements IPlugin<Competitive> {
         for (StrikePlayer player : instance.getOnlinePlayers()) {
             bot.getPlayer().showPlayer(player.getPlayer());
             player.getPlayer().showPlayer(bot.getPlayer());
-            MsdmPlugin.highlight("SHow bot " + bot.getName() + " to " + player.getName());
         }
 
     }
@@ -120,19 +118,14 @@ public class TargetPracticePlugin implements IPlugin<Competitive> {
 
     @LocalEvent
     private void onNpcSetMoving(ConfigFieldChangeEvent e) {
-        MsdmPlugin.highlight("onNpcSetMoving");
         if (e.getField() == ConfigField.NPC_STRAFE) {
             boolean isMoving = e.getNewValue() == 1;
-            MsdmPlugin.highlight("ismoving: " + isMoving);
             var bots = instance.getBots();
-            MsdmPlugin.highlight("bots: " + bots.size());
             for (BotPlayer bot : bots) {
                 if (!bot.getNPC().hasTrait(TargetPracticeTrait.class)) {
-                    MsdmPlugin.highlight("bot " + bot.getName() + " has no trait");
                     continue;
                 }
                 TargetPracticeTrait trait = bot.getNPC().getTrait(TargetPracticeTrait.class);
-                MsdmPlugin.highlight("set isMoving to " + isMoving + " for " + bot.getName());
                 trait.setMoving(isMoving);
             }
         }

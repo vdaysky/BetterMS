@@ -44,6 +44,8 @@ import obfuscate.game.sound.GameSoundManager;
 import obfuscate.game.sound.TeamRadio;
 import obfuscate.game.state.*;
 import obfuscate.gamemode.Competitive;
+import obfuscate.logging.Logger;
+import obfuscate.logging.Tag;
 import obfuscate.mechanic.item.StrikeStack;
 import obfuscate.mechanic.item.armor.StrikeArmor;
 import obfuscate.mechanic.item.guns.GunType;
@@ -82,6 +84,7 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import net.citizensnpcs.api.trait.Trait;
+import org.apache.commons.logging.Log;
 import org.bukkit.*;
 import org.bukkit.Effect;
 import org.bukkit.block.Block;
@@ -226,7 +229,7 @@ public abstract class Game extends GameData implements IGame {
     private final HashSet<Grenade> thrownGrenades = new HashSet<>();
 
     public void initGame() {
-        MsdmPlugin.highlight("initGame called");
+        Logger.info("Initializing the game", this, Tag.GAME_LIFECYCLE);
 
         _gameMap = MapManager.getGameMap(getMapCodeName());
 
@@ -289,7 +292,7 @@ public abstract class Game extends GameData implements IGame {
     }
 
     public @Nullable Promise<Boolean> tryLeavePlayer(StrikePlayer player) {
-        MsdmPlugin.logger().info("Player " + player.getName() + " left the game.");
+        Logger.info("Player " + player.getName() + " left the game.", player, this);
 
         if (getGameSession(player).getStatus() == PlayerStatus.PARTICIPATING) {
             if (!isEnded() && getGameSession(player).isAlive()) {
@@ -383,8 +386,6 @@ public abstract class Game extends GameData implements IGame {
 
     /** Go into round end state. If side swap, pause will be longer. */
     public void setRoundEndState() {
-        MsdmPlugin.highlight("Should swap sides: " + shouldSwapSides());
-
         setGameState(GeneralGameStage.ROUND_END);
 
         // event (this event will add a time based win, shouldSwapSides can only be called after)
@@ -699,10 +700,10 @@ public abstract class Game extends GameData implements IGame {
     @Override
     public void forceStart(int seconds)
     {
-        MsdmPlugin.logger().info("Force start game in " + seconds + " seconds");
+        Logger.info("Force start game in " + seconds + " seconds", this, Tag.GAME_LIFECYCLE);
         // game is already started
         if (isInProgress()) {
-            MsdmPlugin.logger().info("Game is already started");
+            Logger.info("Game is already started", this, Tag.GAME_LIFECYCLE);
             return;
         }
 
@@ -783,6 +784,9 @@ public abstract class Game extends GameData implements IGame {
     @LocalEvent
     @NativeEvent
     private void handlePlayerLeft(PlayerLeaveGameEvent e) {
+        if (!e.getPlayer().isOnline()) {
+            return;
+        }
         MsdmPlugin.getGameServer().getFallbackServer().join(e.getPlayer());
         e.getPlayer().sendMessage(MsgSender.SERVER, ChatColor.GRAY + "You were moved to hub from game#" + getId().getObjId());
     }
@@ -969,7 +973,7 @@ public abstract class Game extends GameData implements IGame {
     public @Nullable InGameTeamData getPlayerRoster(StrikePlayer player) {
         var session = getGameSession(player);
         if (session == null) {
-            MsdmPlugin.warn("Player " + player + " does not have session in game " + this);
+            Logger.warning("Player " + player + " does not have session in game " + this, this, player);
             return null;
         }
         return session.getRoster();
@@ -1047,14 +1051,14 @@ public abstract class Game extends GameData implements IGame {
         boolean rejoined = _everPresentPlayers.contains(player);
         _everPresentPlayers.add(player);
 
-        MsdmPlugin.logger().info("Player " + player.getName() + " joined");
+        Logger.info("Player " + player.getName() + " joined", player, this);
         if (spectate) {
-            MsdmPlugin.logger().info("Player " + player.getName() + " spectates");
+            Logger.info("Player " + player.getName() + " spectates", player, this);
         }
         else {
             // if player joins or rejoins - he is not ready
             readyList.put(player, false);
-            MsdmPlugin.logger().info("Player " + player.getName() + " is not ready");
+            Logger.info("Player " + player.getName() + " is not ready", player, this);
         }
 
 
@@ -1068,7 +1072,7 @@ public abstract class Game extends GameData implements IGame {
             // trigger Pre event
             new PlayerReconnectEvent(this, player).trigger();
 
-            MsdmPlugin.logger().info("Player " + player.getName() + " is reconnected");
+            Logger.info("Player " + player.getName() + " is reconnected", player, this);
         }
 
         getGameSession(player).setAlive(false);
@@ -1337,7 +1341,7 @@ public abstract class Game extends GameData implements IGame {
         if (isInProgress())
             return;
 
-        MsdmPlugin.highlight("Game Started!");
+        Logger.info("Game Started", this, Tag.GAME_LIFECYCLE);
 
         inProgress = true;
 
@@ -1459,11 +1463,11 @@ public abstract class Game extends GameData implements IGame {
         StrikePlayer next = getNextTarget(target);
 
         if (next == null) {
-            MsdmPlugin.warn("No next target found for " + spectator.getName());
+            Logger.warning("No next target found for " + spectator.getName(), this, spectator);
             return;
         }
 
-        MsdmPlugin.highlight("Spectating " + next.getName() + " for " + spectator.getName());
+        Logger.warning("Spectating " + next.getName() + " for " + spectator.getName(), this, spectator);
         setSpectatorTarget(spectator, next);
     }
 

@@ -10,6 +10,8 @@ import com.neovisionaries.ws.client.WebSocket;
 import com.neovisionaries.ws.client.WebSocketAdapter;
 import com.neovisionaries.ws.client.WebSocketException;
 import com.neovisionaries.ws.client.WebSocketFactory;
+import obfuscate.logging.Logger;
+import obfuscate.logging.Tag;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
@@ -64,7 +66,7 @@ public class WebsocketClient {
         }
 
         if (this.pingId != null) {
-            MsdmPlugin.logger().info("Didn't receive PING response to ID " + this.pingId + " in 30 seconds. Reconnecting to the backend");
+            Logger.info("Didn't receive PING response to ID " + this.pingId + " in 30 seconds. Reconnecting to the backend", Tag.NET_EVENTS);
             this.reconnect();
         }
         this.pingId = new Random().nextInt();
@@ -72,15 +74,15 @@ public class WebsocketClient {
     }
 
     public void reconnect() {
-        MsdmPlugin.logger().info("Reconnect");
+        Logger.info("Reconnecting to the backend", Tag.NET_EVENTS);
 
         if (websocket != null && websocket.isOpen()) {
-            MsdmPlugin.logger().warning("There is an open connection already. Closing it...");
+            Logger.warning("There is an open connection already. Closing it...", Tag.NET_EVENTS);
             websocket.disconnect();
-            MsdmPlugin.logger().warning("Connection closed. Connecting in 5 seconds...");
+            Logger.warning("Connection closed. Connecting in 5 seconds...", Tag.NET_EVENTS);
             scheduler.schedule(this::connect, 5, TimeUnit.SECONDS);
         } else {
-            MsdmPlugin.logger().info("Connecting...");
+            Logger.info("Connecting...", Tag.NET_EVENTS);
             this.connect();
         }
     }
@@ -89,7 +91,7 @@ public class WebsocketClient {
         final String socketURL = url + "/ws/connect?session_id=" + sessionId;
 
         try {
-            MsdmPlugin.logger().info("Try to connect to the websocket @ " + socketURL);
+            Logger.info("Try to connect to the websocket @ " + socketURL, Tag.NET_EVENTS);
             websocket = new WebSocketFactory()
                     .setConnectionTimeout(10000) // 10 seconds timeout
                     .createSocket(socketURL)
@@ -101,13 +103,13 @@ public class WebsocketClient {
                     })
                     .connect();
             isUp = true;
-            MsdmPlugin.logger().info("Send init");
+            Logger.info("Send init event to backend", Tag.NET_EVENTS);
             sendMessage(new BukkitInitEvent("Whatever"));
 
             // send all events. if connection goes down at any point
             // newly added messages won't be sent
             for (int i = 0; i < queue.size(); ++i) {
-                MsdmPlugin.logger().info("Send queued");
+                Logger.info("Send queued events to backend", Tag.NET_EVENTS);
                 this.sendMessage(queue.poll());
             }
 
@@ -116,10 +118,10 @@ public class WebsocketClient {
             }
 
         } catch (WebSocketException | IOException e) {
-            MsdmPlugin.logger().info("Error connecting to the websocket");
+            Logger.info("Error connecting to the websocket", Tag.NET_EVENTS);
             isUp = false;
             e.printStackTrace();
-            MsdmPlugin.logger().info("Could not connect to the backend websocket endpoint at " + url + ". Retrying in 30 seconds");
+            Logger.info("Could not connect to the backend websocket endpoint at " + url + ". Retrying in 30 seconds", Tag.NET_EVENTS);
             scheduler.schedule(this::reconnect, 30, TimeUnit.SECONDS);
         }
     }
@@ -137,8 +139,7 @@ public class WebsocketClient {
         try {
             BackendEventManager.parseAndTrigger(eventDataJson);
         } catch (Exception e) {
-            MsdmPlugin.logger().log(Level.SEVERE, "[WS] Could not create and trigger event:");
-            e.printStackTrace();
+            Logger.severe("[WS] Could not create and trigger event:", e, Tag.NET_EVENTS);
         }
     }
 
@@ -162,13 +163,13 @@ public class WebsocketClient {
         String message = gson.toJson(map);
 
         if (!isUp) {
-            MsdmPlugin.logger().warning("Could not send WS message: " + message + ". Connection is not established");
+            Logger.warning("Could not send WS message: " + message + ". Connection is not established", Tag.NET_EVENTS);
             queue.add(e);
             return;
         }
 
         if (websocket == null || !websocket.isOpen()) {
-            MsdmPlugin.warn("Websocket connection is closed. Reconnecting");
+            Logger.warning("Websocket connection is closed. Reconnecting", Tag.NET_EVENTS);
             reconnect();
         }
 
@@ -178,7 +179,7 @@ public class WebsocketClient {
         } catch (Exception ex) {
             ex.printStackTrace();
             queue.add(e);
-            MsdmPlugin.logger().info("Failed to send message to the backend. Reconnecting");
+            Logger.info("Failed to send message to the backend. Reconnecting", Tag.NET_EVENTS);
             this.reconnect();
         }
 
@@ -187,7 +188,7 @@ public class WebsocketClient {
     /** Handle ping message */
     public void receivePing(Integer pingId) {
         if (!pingId.equals(this.pingId)) {
-            MsdmPlugin.logger().warning("Received PING response to ID " + pingId + " but expected " + this.pingId);
+            Logger.warning("Received PING response to ID " + pingId + " but expected " + this.pingId, Tag.NET_EVENTS);
         }
         this.pingId = null;
     }

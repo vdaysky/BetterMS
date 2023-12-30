@@ -1,6 +1,7 @@
 package obfuscate.comand.builder;
 
 import obfuscate.MsdmPlugin;
+import obfuscate.logging.Logger;
 import org.bukkit.command.Command;
 
 import java.lang.reflect.Method;
@@ -19,12 +20,9 @@ public class CommandRegistry {
     public static void register(CommandHandler command, String name, String... aliases) {
         try {
             registerFakeCommand(new FakeCommandRegistry(command, name, aliases), MsdmPlugin.getInstance());
-            MsdmPlugin.logger().info("Registered " + name + " (" + Arrays.toString(aliases) + ") successfully.");
+            Logger.info("Registered " + name + " (" + Arrays.toString(aliases) + ") successfully.");
         } catch (Exception e) {
-            System.err.println("=======================================");
-            System.err.println("Reflective command registration failed:");
-            e.printStackTrace();
-            System.err.println("=======================================");
+            Logger.critical("Reflective command registration failed", e);
         }
     }
 }

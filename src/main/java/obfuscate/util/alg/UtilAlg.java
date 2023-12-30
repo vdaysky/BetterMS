@@ -4,6 +4,7 @@ import obfuscate.MsdmPlugin;
 import obfuscate.game.core.Game;
 import obfuscate.game.core.PlayerStatus;
 import obfuscate.game.player.StrikePlayer;
+import obfuscate.logging.Logger;
 import obfuscate.mechanic.version.hitbox.HitArea;
 import obfuscate.mechanic.version.hitbox.Hitbox;
 import obfuscate.mechanic.version.LocationRecorder;
@@ -549,7 +550,7 @@ public class UtilAlg
 
         if (playerLoc == null) {
             if (retrospectTicks != 0) {
-                MsdmPlugin.info("Failed to find retrospective location, user current one");
+                Logger.warning("Failed to find retrospective location, user current one");
             }
             playerLoc = new PlayerLocation(player.getLocation(), player.getEyeLocation());
         }

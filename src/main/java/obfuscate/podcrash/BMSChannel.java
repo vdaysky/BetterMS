@@ -1,6 +1,7 @@
 package obfuscate.podcrash;
 
 import obfuscate.game.player.StrikePlayer;
+import obfuscate.logging.Logger;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.jetbrains.annotations.NotNull;
@@ -16,10 +17,10 @@ public class BMSChannel implements PluginMessageListener {
         int packetId = buf.getInt();
 
         if (packetId == 1) {
+            Logger.info("Received BMS packet from " + player.getName() + ". Confirming Client use.", player);
             StrikePlayer sp = StrikePlayer.getOrCreate(player);
             sp.setBmsClientUsed(true);
             sp.updateTabName(null);
         }
-
     }
 }

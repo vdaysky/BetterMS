@@ -12,6 +12,7 @@ import obfuscate.game.damage.NamedDamageSource;
 import obfuscate.game.debug.ViewRecorder;
 import obfuscate.game.sound.Radio;
 import obfuscate.gamemode.Competitive;
+import obfuscate.logging.Logger;
 import obfuscate.mechanic.item.StrikeStack;
 import obfuscate.mechanic.item.guns.StrikeItemType;
 import obfuscate.mechanic.item.guns.Gun;
@@ -88,15 +89,12 @@ public class StrikePlayer extends OfflineStrikePlayer implements NamedDamageSour
     }
 
     public static @Nullable StrikePlayer findByName(String name) {
-        MsdmPlugin.highlight("Find player by name: " + name);
         var bPlayer = Bukkit.getPlayer(name);
 
         if (bPlayer == null) {
-            MsdmPlugin.highlight("Player not found");
             return null;
         }
 
-        MsdmPlugin.highlight("Player found: " + bPlayer);
         return StrikePlayer.getOrCreate(bPlayer);
     }
 
@@ -233,7 +231,7 @@ public class StrikePlayer extends OfflineStrikePlayer implements NamedDamageSour
             return true;
 
         if (getRole() == null) {
-            MsdmPlugin.highlight("Player " + getName() + " has no role assigned!");
+            Logger.warning("Player " + getName() + " has no role assigned!", this);
             return false;
         }
 
@@ -331,7 +329,6 @@ public class StrikePlayer extends OfflineStrikePlayer implements NamedDamageSour
     @LocalEvent
     public void onTeamJoin(PlayerRosterChangeEvent e)
     {
-        MsdmPlugin.highlight("PlayerRosterChangeEvent " + e.getPlayer().getName() + " - " + e.getNewTeam().getNiceName());
         updateTeam(e.getGame(), e.getNewTeam());
     }
 
@@ -345,9 +342,6 @@ public class StrikePlayer extends OfflineStrikePlayer implements NamedDamageSour
             return;
         }
 
-        MsdmPlugin.important("PlayerJoinRosterEvent " + e.getPlayer().getName() + " - " + roster.getTeam().getNiceName());
-
-        MsdmPlugin.highlight("Player joined game. Can see team names: " + e.getGame().getConfig().getValue(ConfigField.CAN_SEE_TEAM_NAMES).bool());
         updateTeam(e.getGame(), roster);
 
     }
@@ -383,11 +377,9 @@ public class StrikePlayer extends OfflineStrikePlayer implements NamedDamageSour
     private void updateTeam(Game game, @Nullable InGameTeamData roster)
     {
         if (roster == null) {
-            MsdmPlugin.important("updateTeam " + getName() + " - NULL");
             updateTeam(game, (StrikeTeam) null);
             return;
         }
-        MsdmPlugin.important("updateTeam " + getName() + " - " + roster.getTeam().getNiceName());
         updateTeam(game, roster.getTeam());
 
     }
@@ -694,7 +686,6 @@ public class StrikePlayer extends OfflineStrikePlayer implements NamedDamageSour
     public static BotPlayer getOrCreate(NPC npc)
     {
         UUID uuid = npc.getEntity().getUniqueId();
-        MsdmPlugin.important("getOrCreate NPC: " + uuid);
 
         if (!strikePlayers.containsKey(uuid)) {
             BotPlayer player = new BotPlayer(npc);
@@ -706,7 +697,6 @@ public class StrikePlayer extends OfflineStrikePlayer implements NamedDamageSour
             );
             strikePlayers.put(uuid, player);
         }
-        MsdmPlugin.important("NPC Created: " + strikePlayers.get(uuid));
         return (BotPlayer) strikePlayers.get(uuid);
     }
 
@@ -739,7 +729,6 @@ public class StrikePlayer extends OfflineStrikePlayer implements NamedDamageSour
 //        }
 //        else
 //        {
-        MsdmPlugin.logger().info("[GetOrCreate player] nothing found call constructor");
         p = new StrikePlayer(player);
         MsdmPlugin.getBackend().getPlayerId(player.getUniqueId()).thenSync(
                 x -> {
@@ -764,7 +753,7 @@ public class StrikePlayer extends OfflineStrikePlayer implements NamedDamageSour
         Player bukkitPLayer = Bukkit.getPlayer(uuid);
 
         if (bukkitPLayer == null) {
-            MsdmPlugin.logger().log(Level.SEVERE, "PLayer with UUID " + uuid + "is not online!");
+          Logger.severe("PLayer with UUID " + uuid + "is not online!");
         }
 
         return getOrCreate(bukkitPLayer);
@@ -972,7 +961,7 @@ public class StrikePlayer extends OfflineStrikePlayer implements NamedDamageSour
     public void loadResources()
     {
         int clientVer = getVersion();
-        MsdmPlugin.highlight("Load resources for " + getName() + " " + clientVer);
+        Logger.info("Load resources for " + getName() + " " + clientVer, this);
         if (clientVer >= ClientVersion.V1_9.getProtocolVersion()) {
             getPlayer().setResourcePack("http://static.betterms.odays.ky/bms_v.0.1.10.zip");
             return;
@@ -1033,7 +1022,7 @@ public class StrikePlayer extends OfflineStrikePlayer implements NamedDamageSour
     public void sendMessage(TextComponent text)
     {
         if (getPlayer() == null) {
-            MsdmPlugin.warn("Failed to deliver message to offline player: " + text);
+            Logger.warning("Failed to deliver message to offline player: " + text, this);
             return;
         }
 
@@ -1042,7 +1031,7 @@ public class StrikePlayer extends OfflineStrikePlayer implements NamedDamageSour
 
     public void sendMessage(String message) {
         if (getPlayer() == null) {
-            MsdmPlugin.warn("Failed to deliver message to offline player: " + message);
+            Logger.warning("Failed to deliver message to offline player: " + message, this);
             return;
         }
 
@@ -1094,7 +1083,6 @@ public class StrikePlayer extends OfflineStrikePlayer implements NamedDamageSour
             return;
         }
 
-        MsdmPlugin.info("Cancel stun for " + getPlayer().getName());
         getPlayer().removePotionEffect(PotionEffectType.JUMP);
         getPlayer().setWalkSpeed(normalWalkSpeed);
 

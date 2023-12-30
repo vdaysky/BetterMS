@@ -5,6 +5,7 @@ import obfuscate.event.custom.pause.PauseStartEvent;
 import obfuscate.game.config.ConfigField;
 import obfuscate.game.player.StrikePlayer;
 import obfuscate.game.state.*;
+import obfuscate.logging.Logger;
 import obfuscate.team.InGameTeamData;
 
 import java.util.ArrayList;
@@ -60,7 +61,7 @@ public abstract class PausableGame extends ShoppableGame
         increaseUsedPauseCount(pausingEntry);
         this._pauseQueue.add(Pause.TACTICAL);
 
-        MsdmPlugin.severe("Pauses are not implemented yet!");
+        Logger.severe("Pauses are not implemented yet!", pausingEntry);
 
 //        if (canPause()) {
 //            startNextPause();
@@ -108,16 +109,16 @@ public abstract class PausableGame extends ShoppableGame
     /** Replace current state with pause state. Does not make any checks, be careful where it is called. */
     public boolean startNextPause()
     {
-        MsdmPlugin.info("Starting next pause");
+        Logger.info("Attempting to start next pause", this);
         if (!hasNextPause()) {
-            MsdmPlugin.info("There are no pauses");
+            Logger.info("There are no pauses", this);
             return false;
         }
 
         // pause to process
         _activePause = _pauseQueue.remove(0);
 
-        MsdmPlugin.info("Will start pause" + _activePause);
+        Logger.info("Will start pause" + _activePause, this);
 
         new PauseStartEvent(_activePause, this).trigger();
 

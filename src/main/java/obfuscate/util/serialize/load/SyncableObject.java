@@ -2,6 +2,8 @@ package obfuscate.util.serialize.load;
 
 import obfuscate.MsdmPlugin;
 import obfuscate.event.custom.network.ModelEvent;
+import obfuscate.logging.Logger;
+import obfuscate.logging.Tag;
 import obfuscate.network.BackendManager;
 import obfuscate.util.Promise;
 import obfuscate.util.serialize.FieldMeta;
@@ -9,6 +11,9 @@ import obfuscate.util.serialize.ListMeta;
 import obfuscate.util.serialize.ObjectId;
 
 import javax.annotation.Nullable;
+import java.io.BufferedWriter;
+import java.io.PrintStream;
+import java.io.Writer;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -167,14 +172,13 @@ public abstract class SyncableObject extends Struct {
                 try {
                     constructor.newInstance(this).trigger();
                 } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-                    e.printStackTrace();
-                    MsdmPlugin.logger().info("Could not trigger Fulfilled Event on Model");
+                    Logger.warning("Could not trigger Fulfilled Event on Model", e, Tag.BLAZELINK);
                 }
                 return;
             }
         }
 
-        MsdmPlugin.logger().log(Level.SEVERE, "Could not find fitting constructor for event " + this.getFulfilledEvent().getSimpleName());
+        Logger.severe("Could not find fitting constructor for event " + this.getFulfilledEvent().getSimpleName(), Tag.BLAZELINK);
     }
 
     @Override

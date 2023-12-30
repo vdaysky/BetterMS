@@ -24,7 +24,6 @@ public class PlayerGameConnectEvent extends FromBackendEvent {
     private PlayerStatus status;
 
     public boolean isSpectating() {
-        MsdmPlugin.highlight("PlayerGameConnectEvent.isSpectating: " + status);
         return status == PlayerStatus.SPECTATING;
     }
 

@@ -186,10 +186,7 @@ public abstract class Struct extends ModelSchemaHolder {
                                 foreignKeyId
                         );
 
-                        promises.add(future.getPromise().thenSync(x -> {
-                            MsdmPlugin.info("Loaded foreign key " + foreignKeyId + " for " + this);
-                            return x;
-                        }));
+                        promises.add(future.getPromise().thenSync(x -> x));
 
                         instance = future.getObject();
                     } else {
@@ -199,10 +196,6 @@ public abstract class Struct extends ModelSchemaHolder {
 
                 } else {
                     HashMap<String, Object> data = (HashMap<String, Object>) json.get(apiField);
-
-                    if (data == null) {
-                        MsdmPlugin.logger().warning("Explicit field " + typeField.getName() + " is null on model " + getClass().getSimpleName());
-                    }
 
                     // for explicitly defined objects we want to reuse them
                     // if we don't it won't be possible to preserve/merge state

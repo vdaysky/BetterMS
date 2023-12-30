@@ -10,6 +10,7 @@ import obfuscate.game.config.ConfigField;
 import obfuscate.game.core.Game;
 import obfuscate.game.player.ClientVersion;
 import obfuscate.game.player.StrikePlayer;
+import obfuscate.logging.Logger;
 import obfuscate.mechanic.version.projectile.FakeEntity;
 import obfuscate.util.UtilEffect;
 import obfuscate.util.alg.TraceEventV2;
@@ -476,33 +477,32 @@ public class Bullet implements CustomListener
 
 	private static void printTraceReport(ArrayList<TraceEventV2> report) {
 		int i = 0;
-		MsdmPlugin.important("Trace report Started");
+		Logger.info("Trace report Started");
 		for (TraceEventV2 trace : report) {
-			MsdmPlugin.info("========== Tick " + i + " ==========");
+			Logger.info("========== Tick " + i + " ==========");
 			String preLoc = trace.getPreLocation().getX() + " " + trace.getPreLocation().getY() + " " + trace.getPreLocation().getZ();
 			String loc = trace.getLocation().getX() + " " + trace.getLocation().getY() + " " + trace.getLocation().getZ();
 
 			if (trace.hitEntity()) {
-				MsdmPlugin.logger().info(i + ". Entity hit. Right before: " + preLoc + " right after: " + loc);
+				Logger.info(i + ". Entity hit. Right before: " + preLoc + " right after: " + loc);
 			}
 
 			if (trace.isSmoke()) {
-				MsdmPlugin.logger().info(i + ". Smoke hit. Right before: " + preLoc + " right after: " + loc);
+				Logger.info(i + ". Smoke hit. Right before: " + preLoc + " right after: " + loc);
 			}
 
 			if (trace.blockEvent()) {
 				if (trace.isEntry()) {
-					MsdmPlugin.logger().info(i + ". Come in block " + trace.getLocation().getBlock().getType() + ". Right before: " + preLoc + " right after: " + loc);
+					Logger.info(i + ". Come in block " + trace.getLocation().getBlock().getType() + ". Right before: " + preLoc + " right after: " + loc);
 				}
 				if (trace.isExit()) {
-					MsdmPlugin.logger().info(i + ". Come out of a block " + trace.getPreLocation().getBlock().getType() + ". Right before: " + preLoc + " right after: " + loc);
+					Logger.info(i + ". Come out of a block " + trace.getPreLocation().getBlock().getType() + ". Right before: " + preLoc + " right after: " + loc);
 				}
-
 			}
 
 			i += 1;
 		}
-		MsdmPlugin.important("Trace report Ended");
+		Logger.info("Trace report Ended");
 	}
 
 	/** this value is a scaled distance travelled through blocks by bullet.

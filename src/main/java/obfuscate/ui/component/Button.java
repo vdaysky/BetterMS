@@ -81,7 +81,6 @@ public abstract class Button<ClickEvent extends Cancellable> {
         if (onClick == null)
             return;
 
-        MsdmPlugin.highlight("OnClick");
         Boolean cancelled = onClick.apply(event);
 
         if (cancelled == null) {

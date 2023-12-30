@@ -1,6 +1,7 @@
 package obfuscate.game.registry;
 
 import obfuscate.MsdmPlugin;
+import obfuscate.logging.Logger;
 
 import java.util.HashMap;
 import java.util.UUID;
@@ -26,7 +27,7 @@ public class OnlinePlayerDataRegistry {
 
     public void resetPlayerData(UUID uuid) {
         for (RegistryModule module : modules.values()) {
-            MsdmPlugin.logger().info("Resetting player data for " + uuid.toString() + " in module " + module.getName());
+            Logger.info("Resetting player data for " + uuid.toString() + " in module " + module.getName());
             module.resetPlayerData(uuid);
         }
     }

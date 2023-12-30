@@ -208,7 +208,7 @@ public class ServerCommands {
                         .child(
                                 "games",
                                 new CommandBuilder()
-                                        .executor(x -> {MsdmPlugin.getGameServer().printState();return true;})
+                                        .executor(x -> {MsdmPlugin.getGameServer().printState(x.getSender());return true;})
                         )
                         .child("inventory",
                                 new CommandBuilder()

@@ -19,6 +19,8 @@ import obfuscate.event.custom.team.PostSideSwapEvent;
 import obfuscate.event.custom.team.RosterPostTeamChangeEvent;
 import obfuscate.game.player.StrikePlayer;
 import obfuscate.game.state.GeneralGameStage;
+import obfuscate.logging.Logger;
+import obfuscate.logging.Tag;
 import obfuscate.team.InGameTeamData;
 import obfuscate.team.StrikeTeam;
 import obfuscate.game.config.ConfigField;
@@ -184,8 +186,8 @@ public abstract class TeamGame extends PausableGame
         broadcastChat(MsgSender.NONE, "");
         broadcastChat(MsgSender.NONE, winnerColor + "===================================");
 
-        MsdmPlugin.highlight("========= Team " + winnerName + " won round " +  + roundInProgress + " by" +
-                reason + ". Score: " + scoreA + ":" + scoreB + " =========");
+        Logger.info("Team " + winnerName + " won round " +  + roundInProgress + " by" +
+                reason + ". Score: " + scoreA + ":" + scoreB, this, Tag.GAME_LIFECYCLE);
 
         new RoundWinEvent(this, winner, getRoundNumber(), reason).trigger();
     }
@@ -224,7 +226,7 @@ public abstract class TeamGame extends PausableGame
 
     @LocalEvent(priority = LocalPriority.POST)
     private void resetRoundnStackEnd(RoundResetEvent e) {
-        MsdmPlugin.highlight("RoundResetEvent");
+        Logger.info("RoundResetEvent", this, Tag.GAME_LIFECYCLE);
         if (isEnded()) {
             return;
         }

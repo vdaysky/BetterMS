@@ -1,6 +1,7 @@
 package obfuscate.util.java;
 
 import obfuscate.MsdmPlugin;
+import obfuscate.logging.Logger;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -72,10 +73,7 @@ public class Reflect
         try {
             Field f = getField(instance.getClass(), key);
             if (f == null) {
-                MsdmPlugin.logger().info("getFieldValue called with invalid arguments: Field does not exist");
-                MsdmPlugin.logger().warning(
-                    Thread.currentThread().getStackTrace().toString()
-                );
+                Logger.warning("getFieldValue called with invalid arguments: Field does not exist");
                 return null;
             }
             f.setAccessible(true);

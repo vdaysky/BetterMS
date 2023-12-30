@@ -2,6 +2,7 @@ package obfuscate.mechanic.version;
 
 import obfuscate.MsdmPlugin;
 import obfuscate.game.player.StrikePlayer;
+import obfuscate.logging.Logger;
 import obfuscate.util.java.DefaultMap;
 import obfuscate.util.java.Pair;
 
@@ -17,7 +18,7 @@ public class LocationRecorder {
 
         // prevent double logging the same tick
         if (!locations.isEmpty() && locations.get(locations.size() - 1).value() > System.currentTimeMillis() - 10) {
-            MsdmPlugin.warn("Do not record player location, it was already recorded");
+            Logger.warning("Do not record player location, it was already recorded");
             return;
         }
 
@@ -42,7 +43,6 @@ public class LocationRecorder {
         for (Pair<PlayerLocation, Long> location : locations) {
 //            MsdmPlugin.important("Location time: " + location.value() + " expected one after " + startTime);
             if (location.value() > startTime) {
-                MsdmPlugin.important("Found loc");
                 loc = location.key();
                 break;
             }

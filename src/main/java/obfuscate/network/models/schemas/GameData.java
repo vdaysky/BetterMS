@@ -10,6 +10,7 @@ import obfuscate.game.core.plugins.IPlugin;
 import obfuscate.game.player.StrikePlayer;
 import obfuscate.gamemode.Competitive;
 import obfuscate.gamemode.registry.GameMode;
+import obfuscate.logging.Logger;
 import obfuscate.util.serialize.load.LoadableMap;
 import obfuscate.util.serialize.load.SyncableObject;
 import obfuscate.util.serialize.load.Loadable;
@@ -76,7 +77,7 @@ public class GameData extends SyncableObject implements PluginHolder<Competitive
                     Class<?> pluginClass = PluginManager.getPluginClass(plugin);
 
                     if (pluginClass == null) {
-                        MsdmPlugin.logger().warning("No plugin found: " + plugin);
+                        Logger.warning("No plugin found: " + plugin, this);
                         continue;
                     }
 

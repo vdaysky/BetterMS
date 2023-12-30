@@ -3,6 +3,8 @@ package obfuscate.event.dispatch.storage;
 import obfuscate.MsdmPlugin;
 import obfuscate.event.LocalPriority;
 import obfuscate.event.custom.CustomEvent;
+import obfuscate.logging.Logger;
+import obfuscate.logging.Tag;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -25,7 +27,7 @@ public class Handler {
     public Object call(CustomEvent e, Object instance) {
 
         if (!method.getDeclaringClass().isAssignableFrom(instance.getClass())) {
-            MsdmPlugin.logger().log(Level.SEVERE, "trying to trigger method " + method.getName() + " on instance of " + instance.getClass() + " : Method not found on instance");
+            Logger.severe("trying to trigger method " + method.getName() + " on instance of " + instance.getClass() + " : Method not found on instance", instance, Tag.EVENTS);
             throw new RuntimeException("Method not found on instance");
         }
 
@@ -33,19 +35,16 @@ public class Handler {
             this.method.setAccessible(true);
             return this.method.invoke(instance, e);
         } catch (IllegalAccessException | InvocationTargetException ex) {
-            MsdmPlugin.info("============[EVENT ERROR]============");
-            MsdmPlugin.logger().severe("Error calling method: " + this.method.getName() + " on " + instance + " with event " + e);
-            MsdmPlugin.info("Below is the list of models Loaded:");
+            Logger.severe("Error calling method: " + this.method.getName() + " on " + instance + " with event " + e, e, ex, Tag.EVENTS);
+            Logger.info("Below is the list of models Loaded:");
+
             for (var model : MsdmPlugin.getBackend().getCachedModels()) {
-                MsdmPlugin.info("- " + model);
+                Logger.info("- " + model, model);
             }
-            MsdmPlugin.info("================= This message is probably useless, only mentioning reflection error ====================");
-            ex.printStackTrace();
-            MsdmPlugin.info("============[EXCEPTION CAUSE, COULD BE USEFUL]============");
+
             if (ex.getCause() != null) {
-                ex.getCause().printStackTrace();
+                Logger.info("Exception Cause", ex.getCause());
             }
-            MsdmPlugin.info("============[       EXCEPTION CAUSE END       ]============");
         }
         return null;
     }

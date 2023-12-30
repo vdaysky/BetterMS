@@ -1,5 +1,7 @@
 package obfuscate;
 
+import com.google.cloud.logging.LoggingHandler;
+import com.google.cloud.logging.LoggingOptions;
 import obfuscate.config.ServerConfig;
 import obfuscate.event.EventManager;
 import obfuscate.event.GeneralServerEventHandler;
@@ -11,6 +13,7 @@ import obfuscate.game.Server;
 import obfuscate.game.core.Game;
 import obfuscate.game.debug.ViewRecorder;
 import obfuscate.game.player.StrikePlayer;
+import obfuscate.logging.Logger;
 import obfuscate.logging.Tag;
 import obfuscate.network.BackendEventManager;
 import obfuscate.network.BackendManager;
@@ -29,7 +32,6 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.pengrad.telegrambot.TelegramBot;
 import net.citizensnpcs.api.CitizensAPI;
-//import net.citizensnpcs.nms.v1_17_R1.entity.EntityHumanNPC;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -41,7 +43,6 @@ import org.bukkit.scoreboard.Team;
 
 import java.util.*;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class MsdmPlugin extends JavaPlugin implements Listener
 {
@@ -56,11 +57,16 @@ public class MsdmPlugin extends JavaPlugin implements Listener
     private static TelegramBot bot;
 
 
-
-
     public MsdmPlugin()
     {
-        obfuscate.logging.Logger.info("MsdmPlugin Is Created", Tag.SERVER_LIFECYCLE);
+        getLogger().addHandler(
+                new LoggingHandler(
+                        "BukkitLogger",
+                        LoggingOptions.getDefaultInstance()
+                )
+        );
+
+        Logger.info("Plugin is being loaded", Tag.SERVER_LIFECYCLE);
         instance = this;
         PluginManager.collectPluginClasses();
         BackendEventManager.collectEventClasses();
@@ -79,35 +85,34 @@ public class MsdmPlugin extends JavaPlugin implements Listener
         return MsdmPlugin.getInstance().server;
     }
 
-    public static Logger logger() {
-        return instance.getLogger();
-    }
-    public static void info(String string) {
-        logger().info(C.BLACK_BRIGHT + string + C.RESET);
-    }
-
-    public static void highlight(String string) {
-        logger().info(C.GREEN + string + C.RESET);
-    }
-
-    public static void warn(String string) {
-        logger().warning(C.YELLOW_BOLD_BRIGHT + string + C.RESET);
-    }
-
-    public static void severe(String string) {
-        logger().severe(C.RED_BACKGROUND_BRIGHT + string + C.RESET);
-    }
-
-    public static void important(String string) {
-        logger().info(C.GREEN_BACKGROUND_BRIGHT + string + C.RESET);
-    }
+//    public static Logger logger() {
+//        return new Logger();
+//    }
+//     public static void info(String string) {
+//        logger().info(C.BLACK_BRIGHT + string + C.RESET);
+//    }
+//
+//    public static void highlight(String string) {
+//        logger().info(C.GREEN + string + C.RESET);
+//    }
+//
+//    public static void warn(String string) {
+//        logger().warning(C.YELLOW_BOLD_BRIGHT + string + C.RESET);
+//    }
+//
+//    public static void severe(String string) {
+//        logger().severe(C.RED_BACKGROUND_BRIGHT + string + C.RESET);
+//    }
+//
+//    public static void important(String string) {
+//        logger().info(C.GREEN_BACKGROUND_BRIGHT + string + C.RESET);
+//    }
 
 
     private void serverOperational() {
-        obfuscate.logging.Logger.info("Server Is Loaded", Tag.SERVER_LIFECYCLE);
+        Logger.info("Server is operational", Tag.SERVER_LIFECYCLE);
 
         for (Team t : Bukkit.getScoreboardManager().getMainScoreboard().getTeams()) {
-            MsdmPlugin.info("Unregister scoreboard team " + t.getName());
             t.unregister();
         }
 
@@ -130,7 +135,7 @@ public class MsdmPlugin extends JavaPlugin implements Listener
                 for (Player player : Bukkit.getOnlinePlayers()) {
                     player.kickPlayer("Backend is down");
                 }
-                MsdmPlugin.logger().log(Level.SEVERE, "Backend is down, shutting down");
+                Logger.severe("Backend is down, shutting down", Tag.SERVER_LIFECYCLE);
                 Bukkit.shutdown();
             }
             return isUp;
@@ -139,7 +144,6 @@ public class MsdmPlugin extends JavaPlugin implements Listener
         server.addHub();
         // record player looks to predict directions
         ViewRecorder.getInstance().start();
-        MsdmPlugin.logger().info("Server Operational");
     }
 
     @Override
@@ -148,7 +152,7 @@ public class MsdmPlugin extends JavaPlugin implements Listener
         server = new Server();
         backend = new BackendManager();
 
-        MsdmPlugin.logger().info("Enabling Plugin");
+        Logger.info("Enabling Plugin", Tag.SERVER_LIFECYCLE);
 
         // Disable footsteps
         ProtocolLibrary.getProtocolManager().addPacketListener(
@@ -187,7 +191,6 @@ public class MsdmPlugin extends JavaPlugin implements Listener
         // operational.
         new Task(this::serverOperational, 0).run();
 
-        MsdmPlugin.logger().info("Registering commands");
         ServerCommands.registerAll();
 
         // listeners

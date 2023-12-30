@@ -4,6 +4,8 @@ import obfuscate.MsdmPlugin;
 import obfuscate.event.Tracked;
 import obfuscate.event.dispatch.EventDispatcher;
 import obfuscate.game.Server;
+import obfuscate.logging.Logger;
+import obfuscate.logging.Tag;
 import obfuscate.util.serialize.dump.ClassSerializer;
 import obfuscate.util.serialize.load.Struct;
 import obfuscate.network.models.responses.EventResponse;
@@ -24,9 +26,9 @@ public class CustomEvent extends Struct implements ToBackendEvent
         // meaning we want to forward them to the backend.
         // tracked events will return meaningful response from backend
         if (isTracked) {
-            MsdmPlugin.highlight("Forward tracked event " + this);
+            Logger.info("Waiting for tracked event to be handled " + this, Tag.NET_EVENTS, Tag.EVENTS);
             return handlersDone.thenAsync((x) -> {
-                MsdmPlugin.important("Tracked event " + this + " handled locally, forwarding to backend");
+                Logger.info("Tracked event " + this + " handled locally, forwarding to backend", Tag.NET_EVENTS, Tag.EVENTS);
                 return MsdmPlugin.getBackend().sendEvent(this);
             });
         }

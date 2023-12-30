@@ -2,6 +2,7 @@ package obfuscate.game.debug;
 
 import obfuscate.MsdmPlugin;
 import obfuscate.game.player.StrikePlayer;
+import obfuscate.logging.Logger;
 import obfuscate.mechanic.item.guns.Bullet;
 
 import java.util.ArrayList;
@@ -28,14 +29,14 @@ public class HitRegLog {
     public BulletLog getPlayerShot(StrikePlayer playerToDebug, Integer shotToDebug) {
         var logs = playerLogs.get(playerToDebug);
         if (logs == null) {
-            MsdmPlugin.warn("Logs array for player " + playerToDebug.getName() + " is not initialized");
+            Logger.warning("Logs array for player " + playerToDebug.getName() + " is not initialized");
             return null;
         }
         int size = logs.size();
         int idx = size + shotToDebug;
 
         if (idx >= logs.size() || idx < 0) {
-            MsdmPlugin.logger().warning("Log index " + shotToDebug + " is out of bounds: there are " + size + " logs");
+            Logger.warning("Log index " + shotToDebug + " is out of bounds: there are " + size + " logs");
         }
 
         return logs.get(idx);

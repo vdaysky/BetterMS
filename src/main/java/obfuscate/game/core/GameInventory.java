@@ -2,6 +2,7 @@ package obfuscate.game.core;
 
 import obfuscate.MsdmPlugin;
 import obfuscate.game.player.StrikePlayer;
+import obfuscate.logging.Logger;
 import obfuscate.mechanic.item.StrikeStack;
 import obfuscate.mechanic.item.guns.StrikeItemType;
 import obfuscate.mechanic.item.utility.ConsumableItem;
@@ -56,7 +57,7 @@ public class GameInventory implements Iterable<StrikeStack>
     public void restore(Game game)
     {
         if (!_holder.isOnline()) {
-            MsdmPlugin.logger().warning("Trying to restore offline inventory");
+            Logger.warning("Trying to restore offline inventory", game, _holder);
             return;
         }
 

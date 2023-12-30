@@ -85,7 +85,6 @@ public class DamageManager
         }
 
         if (area == HitArea.MISS) {
-            MsdmPlugin.highlight(">  Bullet missed");
             return;
         }
 

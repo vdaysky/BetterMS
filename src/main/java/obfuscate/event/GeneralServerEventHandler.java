@@ -44,7 +44,6 @@ public class GeneralServerEventHandler implements Listener
 
     private void hideAdvancementsFor(World world) {
         world.setGameRuleValue("announceAdvancements", "false");
-        MsdmPlugin.info("Achievements are now hidden for world '" + world.getName() + "'.");
     }
 
     /* Hide advancements for new worlds */

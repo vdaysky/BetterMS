@@ -2,6 +2,7 @@ package obfuscate.game;
 
 import obfuscate.Lobby;
 import obfuscate.MsdmPlugin;
+import obfuscate.comand.WrappedSender;
 import obfuscate.event.CustomListener;
 import obfuscate.event.LocalEvent;
 import obfuscate.event.LocalPriority;
@@ -21,6 +22,9 @@ import obfuscate.game.registry.OnlinePlayerDataRegistry;
 import obfuscate.gamemode.Competitive;
 import obfuscate.gamemode.registry.GameMode;
 import obfuscate.hub.Hub;
+import obfuscate.logging.Logger;
+import obfuscate.logging.Tag;
+import obfuscate.message.MsgSender;
 import obfuscate.network.BackendManager;
 import obfuscate.network.models.responses.IntentResponse;
 import obfuscate.util.serialize.ObjectId;
@@ -66,26 +70,26 @@ public class Server extends SyncableObject implements CustomListener
         return dependencies;
     }
 
-    public void printState() {
-        MsdmPlugin.logger().info("============= Games =================");
+    public void printState(WrappedSender sender) {
+        sender.sendMessage(MsgSender.PLUGIN,"============= Games =================");
         for (StrikePlayer player : playerLobbies.keySet()){
-            MsdmPlugin.logger().info("- " + player.getName() + " in " + playerLobbies.get(player));
+            sender.sendMessage(MsgSender.PLUGIN, player.getName() + " in " + playerLobbies.get(player));
         }
 
         for (Game game: games){
-            MsdmPlugin.logger().info("Game: " + game.getId());
-            MsdmPlugin.logger().info("    ============= Teams =================");
-            MsdmPlugin.logger().info("    Team A:");
+            sender.sendMessage(MsgSender.PLUGIN,"Game: " + game.getId());
+            sender.sendMessage(MsgSender.PLUGIN,"    ============= Teams =================");
+            sender.sendMessage(MsgSender.PLUGIN,"    Team A:");
             for (StrikePlayer player : game.getTeamA().getPlayers()) {
-                MsdmPlugin.logger().info("      - " + player.getName());
+                sender.sendMessage(MsgSender.PLUGIN,"      - " + player.getName());
             }
-            MsdmPlugin.logger().info("    Team B:");
+            sender.sendMessage(MsgSender.PLUGIN,"    Team B:");
             for (StrikePlayer player : game.getTeamB().getPlayers()) {
-                MsdmPlugin.logger().info("      - " + player.getName());
+                sender.sendMessage(MsgSender.PLUGIN,"      - " + player.getName());
             }
-            MsdmPlugin.logger().info("    ============= Participants Online =================");
+            sender.sendMessage(MsgSender.PLUGIN,"    ============= Participants Online =================");
             for (StrikePlayer player : game.getOnlineDeadOrAliveParticipants()) {
-                MsdmPlugin.logger().info("      - " + player.getName());
+                sender.sendMessage(MsgSender.PLUGIN,"      - " + player.getName());
             }
         }
     }
@@ -99,10 +103,9 @@ public class Server extends SyncableObject implements CustomListener
 
     @LocalEvent
     private Promise<?> handleSyncEvent(ModelUpdateEvent e) {
-//        MsdmPlugin.highlight("ModelUpdateEvent: " + e.getUpdatedObjectId());
 
         if (e.getType().equals("Delete")) {
-            MsdmPlugin.info("ModelUpdateEvent: Received delete event for " + e.getObjectId());
+            Logger.warning("ModelUpdateEvent: Received delete event for " + e.getObjectId(), Tag.NET_EVENTS);
             return Promise.Instant();
         }
 
@@ -120,7 +123,7 @@ public class Server extends SyncableObject implements CustomListener
 
         // we received update event for model we do not track
         if (obj == null) {
-            MsdmPlugin.warn("Received update for model we do not track: " + e.getObjectId());
+            Logger.warning("Received update for model we do not track: " + e.getObjectId(), Tag.NET_EVENTS);
             return null;
         }
 
@@ -196,6 +199,7 @@ public class Server extends SyncableObject implements CustomListener
     }
 
     private void setPlayerLobby(StrikePlayer player, Lobby lobby) {
+        Logger.info("Set player lobby: " + player.getName() + " -> " + lobby, lobby, player, Tag.LOBBY);
         playerLobbies.put(player, lobby);
         player.clearBukkitInventory();
         player.setLevel(0);

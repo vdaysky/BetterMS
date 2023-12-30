@@ -137,7 +137,6 @@ public class BotPlayer extends StrikePlayer
             return;
         }
 
-        MsdmPlugin.info("Cancel stun for bot");
         getPlayer().removePotionEffect(PotionEffectType.JUMP);
         getPlayer().setWalkSpeed(normalWalkSpeed);
 

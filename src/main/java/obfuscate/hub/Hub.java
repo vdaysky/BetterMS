@@ -13,6 +13,8 @@ import obfuscate.event.custom.lobby.PlayerJoinHubEvent;
 import obfuscate.event.custom.lobby.PlayerLeaveHubEvent;
 import obfuscate.event.custom.network.ModelEvent;
 import obfuscate.game.player.StrikePlayer;
+import obfuscate.logging.Logger;
+import obfuscate.logging.Tag;
 import obfuscate.util.chat.C;
 import obfuscate.util.serialize.load.SyncableObject;
 import obfuscate.util.serialize.load.Model;
@@ -27,13 +29,15 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Model(name = "hub")
 public class Hub extends SyncableObject implements CustomListener, Lobby
 {
     private TempMap tempMap;
-    private List<StrikePlayer> players = new ArrayList<>();
+    private Set<StrikePlayer> players = new HashSet<>();
 
     public Hub() {
         tempMap = MapManager.loadMap(new HubMap("hub"));
@@ -44,6 +48,10 @@ public class Hub extends SyncableObject implements CustomListener, Lobby
     }
 
     public void join(StrikePlayer player) {
+        if (players.contains(player)) {
+            Logger.warning("Player " + player + " tried to join hub twice", player, Tag.POTENTIAL_BUG, Tag.LOBBY);
+            return;
+        }
         players.add(player);
         player.getPlayer().teleport(tempMap.getWorld().getSpawnLocation());
         player.getPlayer().setGameMode(GameMode.ADVENTURE);

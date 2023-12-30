@@ -1,6 +1,7 @@
 package obfuscate.world;
 
 import obfuscate.MsdmPlugin;
+import obfuscate.logging.Logger;
 import obfuscate.util.Position;
 import obfuscate.util.block.ComplexBoundingBox;
 import obfuscate.util.block.RelBoundingBox;
@@ -203,7 +204,6 @@ public class MapManager
 
     public static @Nullable TempMap loadMap(MapData mapData)
     {
-        MsdmPlugin.logger().info("LoadMap inside " + Thread.currentThread().getName());
         String tempName = mapData.getName() + "-" + UUID.randomUUID();
         File worldsContainerPath = MsdmPlugin.getInstance().getServer().getWorldContainer();
 
@@ -212,7 +212,7 @@ public class MapManager
         File destination = new File(worldsContainerPath, tempName);
 
         if (!template.exists()) {
-            MsdmPlugin.logger().warning("Template file for map " + mapData.getName() + " does not exist.");
+            Logger.warning("Template file for map " + mapData.getName() + " does not exist.");
             return null;
         }
 
@@ -238,12 +238,12 @@ public class MapManager
         World world = Bukkit.getWorld(map.getTempName());
         if (world == null)
         {
-            System.out.println("[WARN] tried to unload not loaded map");
+            Logger.warning("tried to unload not loaded map");
             return;
         }
         for (Player player : world.getPlayers())
         {
-            MsdmPlugin.logger().log(Level.SEVERE, "Player was not moved to a new game / another lobby by Lobby.");
+            Logger.severe("Player was not moved to a new game / another lobby by Lobby.");
             player.kickPlayer("You are not supposed to be here! report this to an admin");
         }
         ArrayList<NPC> toDelete = new ArrayList<>();

@@ -149,7 +149,6 @@ public class CommandHandler {
         }
 
         for (String key : parent.childCommands.keySet()) {
-            MsdmPlugin.highlight("childCommands>key: " + key);
             if (parent.childCommands.get(key) == handler) {
                 return key;
             }

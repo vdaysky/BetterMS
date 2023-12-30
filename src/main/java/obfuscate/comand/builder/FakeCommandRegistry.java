@@ -207,7 +207,6 @@ public class FakeCommandRegistry extends BukkitCommand {
             // we expect to see a value, so grab it and go to next arg
             if (nextArgType != null) {
 
-                MsdmPlugin.highlight("Expected value part of named arg. Parse '" + arg + "' as value for " + nextArgType.getName() + " arg");
                 // if we managed to successfully grab the arg then we move on to the next one
                 tryParseAddArgument(optional, nextArgType, arg, false, afterReqIdx, raisesParsingErrors);
                 argIdx = afterReqIdx + 1;
@@ -229,7 +228,6 @@ public class FakeCommandRegistry extends BukkitCommand {
                     // argument is certainly not positional, because we matched the prefix
                     tryParseAddArgument(optional, optArgType, value, false, afterReqIdx, raisesParsingErrors);
                     nextArgType = optArgType;
-                    MsdmPlugin.highlight("We found prefix for named arg: '" + optArgType.getName() + "'");
                     argIdx = afterReqIdx + 1;
 
                     break;
@@ -491,7 +489,6 @@ public class FakeCommandRegistry extends BukkitCommand {
         }
 
         if (!sender.hasPermission(requiredBasePermission, context.getScopes())) {
-            MsdmPlugin.info("Missing permission: " + requiredBasePermission + " for command: " + label);
             sender.sendMessage(MsgSender.CMD, ChatColor.RED + "You don't have permission to do this!");
             return false;
         }
@@ -560,7 +557,6 @@ public class FakeCommandRegistry extends BukkitCommand {
             return handler.getCompleter().autocomplete(context);
 
         } catch (CommandLevelParseException e) {  // shouldn't happen
-            MsdmPlugin.logger().warning("Invalid command, no hints returned");
             return new ArrayList<>();
         }
     }
@@ -576,7 +572,6 @@ public class FakeCommandRegistry extends BukkitCommand {
 
         var chatId = MsdmPlugin.Config.getChatId();
         var message = sender.getName() + " issued a command: " + label + " " + String.join(" ", args);
-        MsdmPlugin.highlight("Send message " + chatId + " " + message);
         MsdmPlugin.getTgBot().execute(
                 new SendMessage(chatId, message),
                 new Callback<SendMessage, SendResponse>() {

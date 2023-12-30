@@ -7,6 +7,8 @@ import obfuscate.event.custom.ToBackendEvent;
 import obfuscate.event.custom.backend.FromBackendEvent;
 import obfuscate.event.custom.backend.internal.PingInEvent;
 import obfuscate.game.core.Game;
+import obfuscate.logging.Logger;
+import obfuscate.logging.Tag;
 import obfuscate.util.serialize.ObjectId;
 import obfuscate.util.serialize.load.*;
 import obfuscate.network.models.responses.EventResponse;
@@ -39,9 +41,9 @@ public class BackendManager implements CustomListener {
     }
 
     public void connect() {
-        MsdmPlugin.logger().info("Connecting to the backend...");
+        Logger.info("Connecting to the backend...", Tag.NET_EVENTS);
         conn = new WebsocketClient(MsdmPlugin.Config.getSocketUrl());
-        MsdmPlugin.logger().info("Connection opened");
+        Logger.info("Connection opened", Tag.NET_EVENTS);
 
         // when connection restarts, reload Server model to refresh the subscription
         // as well as to get the latest data
@@ -144,7 +146,10 @@ public class BackendManager implements CustomListener {
                 Object errors = data.get("errors");
 
                 if (errors != null) {
-                    MsdmPlugin.severe("!!! There was an error getting graphql data. Query: " + query + " Errors: " + errors);
+                    Map<String, Object> extras = new HashMap<>();
+                    extras.put("query", query);
+                    extras.put("errors", errors);
+                    Logger.severe("There was an error getting graphql data. Query: " + query + " Errors: " + errors, Tag.NET_EVENTS, extras);
                 }
 
                 Object modelData = ((HashMap<String, Object>)data.get("data")).get(instance.getModelName());
@@ -188,13 +193,13 @@ public class BackendManager implements CustomListener {
      * */
     public @Nullable Promise<? extends EventResponse> sendEvent(ToBackendEvent e) {
         /* Send arbitrary event to the backend */
-        MsdmPlugin.logger().info("SendEvent: " + e.getName() + " " + e.getPayload());
+        Logger.info("Sending event to the Backend: " + e.getName(), e.getPayload(), Tag.NET_EVENTS);
         HashMap<String, Object> toSend = new HashMap<>();
         toSend.put("type", e.getName());
         toSend.put("data", e.getPayload());
         return makeHttpRequest("api/bukkit/event", "POST", toSend).thenAsync(
             x -> {
-                MsdmPlugin.important("Received event " + e.getClass().getSimpleName() + " response: " + x);
+                Logger.info("Received response for event " + e.getClass().getSimpleName(), x, Tag.NET_EVENTS);
                 return ResponseManager.createResponse(
                         e,
                         (HashMap<String, Object>) ((HashMap<String, Object>) x).get("response")
@@ -262,7 +267,7 @@ public class BackendManager implements CustomListener {
 
             .thenAccept((HttpResponse x)-> {
                 if (x.statusCode() != 200) {
-                    MsdmPlugin.severe("[HTTP] Bad response: " + x.statusCode() + " " + x.body());
+                    Logger.severe("[HTTP] Bad response: " + x.statusCode() + " " + x.body());
                     return;
                 }
                 try {
@@ -287,7 +292,7 @@ public class BackendManager implements CustomListener {
                 addTrackedModel(model, pk);
             } catch (InstantiationException | InvocationTargetException | IllegalAccessException | NoSuchMethodException e) {
                 e.printStackTrace();
-                MsdmPlugin.severe("Error message: " + e.getMessage());
+                Logger.severe("Reflection Error while creating model instance of: " + targetModel.getName() + " with pk " + pk, e);
                 throw new RuntimeException("[BetterMS] Reflection Error while creating model instance of " + targetModel.getName() + " with pk " + pk);
             }
         }

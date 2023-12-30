@@ -196,10 +196,6 @@ public class BetterGrenadePhysics implements GrenadePhysics {
             Location yMove = intermediateLoc.clone().add(0, tinyMove.getY(), 0);
             Location zMove = intermediateLoc.clone().add(0, 0, tinyMove.getZ());
 
-            if (UtilBlock.isInsideBlock(intermediateLoc)) {
-                MsdmPlugin.severe("Grenade is inside block! (1)");
-            }
-
             // we are inside block, meaning we need to rebound
             if (UtilBlock.isInsideBlock(xMove)) {
                 if (Math.abs(currentVelocity.getX()) > 0.01) {
@@ -219,10 +215,6 @@ public class BetterGrenadePhysics implements GrenadePhysics {
             } else {
                 // do tiny move in X direction
                 intermediateLoc.add(tinyMove.getX(), 0, 0);
-            }
-
-            if (UtilBlock.isInsideBlock(intermediateLoc)) {
-                MsdmPlugin.severe("Grenade is inside block! (2)");
             }
 
             // we are inside block, meaning we need to rebound
@@ -245,10 +237,6 @@ public class BetterGrenadePhysics implements GrenadePhysics {
             } else {
                 // do tiny move in Z direction
                 intermediateLoc.add(0, 0, tinyMove.getZ());
-            }
-
-            if (UtilBlock.isInsideBlock(intermediateLoc)) {
-                MsdmPlugin.severe("Grenade is inside block! (3)");
             }
 
             // we are inside block, meaning we need to rebound

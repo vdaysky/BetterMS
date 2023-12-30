@@ -1,6 +1,7 @@
 package obfuscate.util.time;
 
 import obfuscate.MsdmPlugin;
+import obfuscate.logging.Logger;
 import org.bukkit.Bukkit;
 
 public class Task
@@ -47,13 +48,12 @@ public class Task
             try {
                 function.run();
             } catch (Exception e) {
-                MsdmPlugin.important("Task generated an exception:");
-                e.printStackTrace();
+                Logger.critical("Task generated an exception", e);
 
                 if (runTrace != null) {
-                    MsdmPlugin.important("Run Trace:");
+                    Logger.info("Run Trace:");
                     for (StackTraceElement traceElement : runTrace) {
-                        MsdmPlugin.info(traceElement.toString());
+                        Logger.info(traceElement.toString());
                     }
                 }
             }

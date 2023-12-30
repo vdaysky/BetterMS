@@ -1,9 +1,12 @@
 package obfuscate.config;
 
+import com.google.auth.Credentials;
+import com.google.auth.oauth2.GoogleCredentials;
 import obfuscate.MsdmPlugin;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 
 public class ServerConfig {
@@ -25,6 +28,14 @@ public class ServerConfig {
         }
         YamlConfiguration config = YamlConfiguration.loadConfiguration(f);
         return config;
+    }
+
+    public Credentials getCredentials() {
+        try {
+            return GoogleCredentials.fromStream(new FileInputStream(new File(MsdmPlugin.getInstance().getDataFolder(), "logging-sa.json")));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public String getBackendUrl() {

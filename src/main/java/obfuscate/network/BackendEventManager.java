@@ -2,6 +2,7 @@ package obfuscate.network;
 
 import obfuscate.MsdmPlugin;
 import obfuscate.event.custom.backend.FromBackendEvent;
+import obfuscate.logging.Logger;
 import obfuscate.network.annotations.Backend;
 import obfuscate.util.time.Task;
 import org.reflections.Reflections;
@@ -16,12 +17,12 @@ public class BackendEventManager {
 
     public static void collectEventClasses() {
         if (!eventClassesLoaded) {
-            MsdmPlugin.logger().info("Parse all backend event classes");
+            Logger.info("Parse all backend event classes");
             for (Class<?> cls : new Reflections("obfuscate").getTypesAnnotatedWith(Backend.class)) {
                 eventClasses.put(cls.getSimpleName(), (Class<? extends FromBackendEvent>) cls);
-                MsdmPlugin.info("add class: " + cls);
+                Logger.info("add class: " + cls);
             }
-            MsdmPlugin.logger().info("All Parsed");
+            Logger.info("All event classes parsed");
             eventClassesLoaded = true;
         }
     }

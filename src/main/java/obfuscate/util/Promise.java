@@ -1,7 +1,10 @@
 package obfuscate.util;
 
 import obfuscate.MsdmPlugin;
+import obfuscate.logging.Logger;
+import obfuscate.logging.Tag;
 import obfuscate.util.time.Scheduler;
+import org.apache.commons.logging.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,9 +41,9 @@ public class Promise<T> {
     public void fulfill(T value) {
 
         if (fulfilled) {
-            MsdmPlugin.logger().log(Level.SEVERE, "Tried to fulfill a finished promise. Value: " + value);
+            Logger.critical("Tried to fulfill a finished promise. Value: " + value, Tag.POTENTIAL_BUG);
             for (var x : Thread.currentThread().getStackTrace()) {
-                MsdmPlugin.logger().log(Level.SEVERE, x.toString());
+                Logger.info(x.toString());
             }
             return;
         }
@@ -67,7 +70,7 @@ public class Promise<T> {
     /** Called to wrap promise with another promise. Promise will be executed after this one resolves. */
     public <R> Promise<R> thenAsync(Function<T, Promise<R>> doAfterThis) {
         if (comodLock) {
-            MsdmPlugin.logger().info("Tried to chain async promise while fulfilling promise: " + this);
+            Logger.critical("Tried to chain async promise while fulfilling promise: " + this, Tag.POTENTIAL_BUG);
             throw new RuntimeException("Tried to chain async promise while fulfilling promise: " + this);
         }
         Promise<R> promise = new Promise<>();
@@ -93,7 +96,7 @@ public class Promise<T> {
     public <R> Promise<R> thenSync(Function<T, R> x) {
 
         if (comodLock) {
-            MsdmPlugin.severe("Tried to chain promise while fulfilling promise: " + this);
+            Logger.critical("Tried to chain promise while fulfilling promise: " + this, Tag.POTENTIAL_BUG);
             throw new RuntimeException("Tried to chain promise while fulfilling promise: " + this);
         }
 

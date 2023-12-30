@@ -18,6 +18,8 @@ import obfuscate.game.player.StrikePlayer;
 import obfuscate.game.state.GameStateInstance;
 import obfuscate.game.state.GeneralGameStage;
 import obfuscate.gamemode.Competitive;
+import obfuscate.logging.Logger;
+import obfuscate.logging.Tag;
 import obfuscate.mechanic.item.objective.Bomb;
 import obfuscate.mechanic.item.objective.Compass;
 import obfuscate.mechanic.item.objective.DefusalKit;
@@ -135,7 +137,7 @@ public class DefusalPlugin implements IPlugin<Competitive> {
     @LocalEvent(priority = LocalPriority.PRE)
     private void onRoundStart(RoundStartEvent e)
     {
-        MsdmPlugin.highlight("Round start event");
+        Logger.info("Round start event", Tag.GAME_LIFECYCLE, e.getGame());
 
         // remove bomb block
         if (ctx.getBomb() != null) {
@@ -158,16 +160,15 @@ public class DefusalPlugin implements IPlugin<Competitive> {
 
         // give bomb
         StrikePlayer randomT = ((Competitive)e.getGame()).getRandomInGameMember(StrikeTeam.T);
-        MsdmPlugin.highlight("Random T to get the bomb: " + randomT);
         ctx.setBombCarry(randomT);
 
         if (ctx.getBombCarry() != null) {
-            MsdmPlugin.highlight("Giving bomb to " + ctx.getBombCarry());
+            Logger.info("Giving bomb to " + ctx.getBombCarry(), e.getGame(), ctx.getBombCarry());
             ctx.getBomb().giveToPlayer(e.getGame(), ctx.getBombCarry(), true);
         }
         else
         {
-            System.out.println("[WARN] could not find T player to give bomb to");
+            Logger.warning("No T's found to give bomb to", e.getGame());
         }
     }
 

@@ -11,6 +11,7 @@ import net.minecraft.server.ScoreboardServer;
 import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.scores.ScoreboardObjective;
 import net.minecraft.world.scores.criteria.IScoreboardCriteria;
+import obfuscate.logging.Logger;
 import org.bukkit.craftbukkit.v1_17_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
@@ -73,7 +74,7 @@ public class Sidebar {
     public void setLine(int line, String text) {
         if (text.length() > 40) {
             text = text.substring(0, 40);
-            MsdmPlugin.severe("Sidebar text is too long! (Max 40 chars), got: '" + text + "'");
+            Logger.warning("Sidebar text is too long! (Max 40 chars), got: '" + text + "'");
         }
         if (lines.size() > line) {
             deleteLine(line);
