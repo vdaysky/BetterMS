@@ -1,0 +1,13 @@
+steps:
+  - name: maven:3.9.6-amazoncorretto-17-al2023
+    entrypoint: mvn
+    args: [ 'clean', 'package' ]
+
+  - name: gcr.io/cloud-builders/gsutil
+    args: [ 'cp', 'target/betterms-jar-with-dependencies.jar', 'gs://$BETTERMS_BUCKET/built-plugins' ]
+
+  - name: gcr.io/cloud-builders/gcloud
+    entrypoint: bash
+    args:
+      - '-c'
+      - gcloud builds triggers run betterms-mc-server-trigger
