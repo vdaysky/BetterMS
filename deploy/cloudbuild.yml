@@ -4,7 +4,7 @@ steps:
     args: [ 'clean', 'package' ]
 
   - name: gcr.io/cloud-builders/gsutil
-    args: [ 'cp', 'target/betterms-jar-with-dependencies.jar', 'gs://$BETTERMS_BUCKET/built-plugins' ]
+    args: [ 'cp', 'target/betterms-jar-with-dependencies.jar', 'gs://$_BETTERMS_BUCKET/built-plugins' ]
 
   - name: gcr.io/cloud-builders/gcloud
     entrypoint: bash
