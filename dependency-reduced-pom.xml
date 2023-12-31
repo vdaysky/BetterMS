@@ -143,6 +143,12 @@
       <version>RELEASE</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>com.viaversion</groupId>
+      <artifactId>viaversion-api</artifactId>
+      <version>LATEST</version>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
   <properties>
     <maven.compiler.target>17</maven.compiler.target>
