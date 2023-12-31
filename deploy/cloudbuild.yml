@@ -1,36 +1,17 @@
 steps:
+  - name: maven:3.9.6-amazoncorretto-17-al2023
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        ls -a /workspace && \
+        yum update && yum install git -y && \
+        curl -o /workspace/BuildTools.jar https://hub.spigotmc.org/jenkins/job/BuildTools/lastSuccessfulBuild/artifact/target/BuildTools.jar && \
+        java -jar /workspace/BuildTools.jar --rev 1.17.1 --compile craftbukkit && \
+        mvn clean package -DoutputDirectory=/workspace
 
   - name: gcr.io/cloud-builders/gsutil
-    args: [ 'cp', 'gs://$_BETTERMS_BUCKET/plugin-dependencies/*', './deps' ]
-
-  - name: maven:3.9.6-amazoncorretto-17-al2023
-    entrypoint: mvn
-    args: [
-      'install:install-file',
-      '-Dfile=deps/craftbukkit-1.17.1.jar',
-      '-DgroupId=org.bukkit',
-      '-DartifactId=craftbukkit',
-      '-Dversion=1.17.1-R0.1-SNAPSHOT',
-      '-Dpackaging=jar'
-    ]
-
-  - name: maven:3.9.6-amazoncorretto-17-al2023
-    entrypoint: mvn
-    args: [
-      'install:install-file',
-      '-Dfile=deps/spigot-1.17.1.jar',
-      '-DgroupId=org.spigotmc',
-      '-DartifactId=spigot-api',
-      '-Dversion=1.17.1-R0.1-SNAPSHOT',
-      '-Dpackaging=jar'
-    ]
-
-  - name: maven:3.9.6-amazoncorretto-17-al2023
-    entrypoint: mvn
-    args: [ 'clean', 'package' ]
-
-  - name: gcr.io/cloud-builders/gsutil
-    args: [ 'cp', 'target/betterms-jar-with-dependencies.jar', 'gs://$_BETTERMS_BUCKET/built-plugins' ]
+    args: [ 'cp', '/workspace/target/betterms-jar-with-dependencies.jar', 'gs://$_BETTERMS_BUCKET/built-plugins' ]
 
   - name: gcr.io/cloud-builders/gcloud
     entrypoint: bash
