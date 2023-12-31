@@ -31,8 +31,9 @@ public class ServerConfig {
     }
 
     public Credentials getCredentials() {
+        File f = new File("plugins/msdm/logging-sa.json");
         try {
-            return GoogleCredentials.fromStream(new FileInputStream(new File(MsdmPlugin.getInstance().getDataFolder(), "logging-sa.json")));
+            return GoogleCredentials.fromStream(new FileInputStream(f));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
