@@ -143,12 +143,6 @@
       <version>RELEASE</version>
       <scope>provided</scope>
     </dependency>
-    <dependency>
-      <groupId>com.neovisionaries</groupId>
-      <artifactId>nv-websocket-client</artifactId>
-      <version>1.13</version>
-      <scope>provided</scope>
-    </dependency>
   </dependencies>
   <properties>
     <maven.compiler.target>17</maven.compiler.target>
