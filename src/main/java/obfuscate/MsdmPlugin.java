@@ -62,7 +62,7 @@ public class MsdmPlugin extends JavaPlugin implements Listener
         getLogger().addHandler(
                 new LoggingHandler(
                         "BukkitLogger",
-                        LoggingOptions.getDefaultInstance()
+                        Logger.options
                 )
         );
 

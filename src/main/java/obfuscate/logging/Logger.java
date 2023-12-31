@@ -16,7 +16,8 @@ import java.util.*;
 
 public class Logger {
 
-    static Logging logging = LoggingOptions.newBuilder().setCredentials(MsdmPlugin.Config.getCredentials()).build().getService();
+    public static LoggingOptions options = LoggingOptions.newBuilder().setCredentials(MsdmPlugin.Config.getCredentials()).build();
+    static Logging logging = options.getService();
 
     private static HashMap<String, Object> contextMapper(Object item, HashMap<String, Object> context) {
 
