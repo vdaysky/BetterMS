@@ -1,0 +1,16 @@
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" http://us.odays.ky:16000/deploy/plugin/${{ secrets.DEPLOY_KEY }})
+          echo "Response status code: $response"
+          if [ $response -ne 200 ]; then
+            echo "HTTP request failed with status code $response"
+            exit 1
+          fi
